@@ -7,8 +7,12 @@ import type {
 
 const STORAGE_KEY = 'nextwave-ai-onboarding:v1';
 
+// `sessionDismissedGuides` 는 plan §5.3 "세션 내 dismiss" 의미를 보존하기 위해
+// 영속 제외. 새로고침 후에는 항상 빈 배열로 시작해야 함.
+export type PersistedUserState = Omit<UserState, 'sessionDismissedGuides'>;
+
 export interface PersistedAppState {
-  user: UserState;
+  user: PersistedUserState;
   contents: Content[];
   guideImpressions: GuideImpression[];
   dashboard: DashboardState;

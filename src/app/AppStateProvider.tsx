@@ -65,7 +65,11 @@ function loadInitialState(): AppState {
 
   return {
     ...initial,
-    user: persisted.user,
+    user: {
+      ...persisted.user,
+      // 세션 dismiss 는 영속 제외 — 새로고침 시 항상 빈 배열로 시작 (plan §5.3)
+      sessionDismissedGuides: [],
+    },
     contents: persisted.contents,
     guideImpressions: persisted.guideImpressions,
     dashboard: persisted.dashboard,
@@ -89,8 +93,11 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
   }, [state]);
 
   useEffect(() => {
+    // sessionDismissedGuides 는 영속 제외 (plan §5.3: 세션 내 dismiss)
+    const { sessionDismissedGuides: _ignored, ...persistedUser } = state.user;
+    void _ignored;
     savePersistedState({
-      user: state.user,
+      user: persistedUser,
       contents: state.contents,
       guideImpressions: state.guideImpressions,
       dashboard: state.dashboard,

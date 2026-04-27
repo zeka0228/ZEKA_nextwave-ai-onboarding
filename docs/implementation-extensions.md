@@ -63,8 +63,12 @@
 - 이유: `dashboard.events` 만 저장하면 `metrics` 와 어긋남. CTA 로 변경된 metrics 가 새로고침 시 리셋되어 events 와 mismatch 가 생김. 데모 일관성 우선.
 
 ### 4.2 임시 상태 영속 제외
-- 영속 제외: `ui`, `activeClassification`, `activeRecommendation`
-- 이유: `ui` 는 모달 열림 같은 일회성 상태. `active*` 는 `classifications` + `selectRecommendation` 로 재계산 가능 → 저장 비용 무의미.
+- 영속 제외:
+  - `ui` — 모달 열림 / 분석 중 같은 일회성 UI 상태
+  - `activeClassification`, `activeRecommendation` — `classifications` + `selectRecommendation` 로 재계산 가능
+  - `user.sessionDismissedGuides` — plan §5.3 의 "세션 내 dismiss" 의미 보존
+- 구현: `PersistedUserState = Omit<UserState, 'sessionDismissedGuides'>` 타입으로 명시. 저장 시 destructure 로 제거, 로드 시 `[]` 로 초기화.
+- 이유 (sessionDismissedGuides): "나중에 하기" 와 "다시 보지 않기" 의 차이가 영속 여부. 둘 다 영속하면 동일 동작이 되어 plan §5.3 의 의도가 사라짐.
 
 ### 4.3 버전 키 prefix
 - 키: `nextwave-ai-onboarding:v1`
