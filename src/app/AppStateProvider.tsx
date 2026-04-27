@@ -8,7 +8,6 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import { resolveUserType } from '../domain/classification/resolveUserType';
 import { applyCtaToDashboard } from '../domain/dashboard/applyCtaToDashboard';
 import { selectRecommendation } from '../domain/recommendation/selectRecommendation';
 import type {
@@ -18,10 +17,13 @@ import type {
   ContentType,
   GuideImpression,
 } from '../domain/types';
-import { classifyContent } from '../services/classifiers/classifyContent';
 import { invokeMockFeature } from '../services/mockFeatureApi';
 import { loadPersistedState, savePersistedState } from '../services/storage';
 import { appReducer, createInitialAppState } from './appReducer';
+// 분류 flow swap point — 임시 manual picker. 자동 모드로 복귀하려면
+// 아래 import 를 '../services/classifiers/classificationFlow' 로 변경하고
+// App.tsx 의 <ManualPickerHost /> 를 제거하세요.
+import { runClassificationFlow } from '../_debug/manualClassificationFlow';
 
 const DEMO_ANALYSIS_DELAY_MS = 800;
 
@@ -117,30 +119,28 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     dispatch({ type: 'ANALYSIS_STARTED', payload: { content } });
 
     try {
-      const [llmResult] = await Promise.all([
-        classifyContent({
-          title: content.title,
-          content: content.body,
-          type: content.type,
-        }),
+      const [outcome] = await Promise.all([
+        runClassificationFlow(
+          {
+            title: content.title,
+            content: content.body,
+            type: content.type,
+          },
+          stateRef.current.user.classifications,
+        ),
         delay(DEMO_ANALYSIS_DELAY_MS),
       ]);
 
       const currentState = stateRef.current;
-      const resolved = resolveUserType({
-        llmResult,
-        classifications: currentState.user.classifications,
-        classifierSource: 'mock_classifier',
-      });
 
       const classification: Classification = {
         contentId: content.id,
-        userType: resolved.userType,
-        rawUserType: llmResult?.user_type ?? 'unknown',
-        confidence: llmResult?.confidence ?? 0,
-        reasoning: llmResult?.reasoning,
-        keywords: llmResult?.keywords ?? [],
-        source: resolved.source,
+        userType: outcome.userType,
+        rawUserType: outcome.rawUserType,
+        confidence: outcome.confidence,
+        reasoning: outcome.reasoning,
+        keywords: outcome.keywords,
+        source: outcome.source,
         createdAt: Date.now(),
       };
 

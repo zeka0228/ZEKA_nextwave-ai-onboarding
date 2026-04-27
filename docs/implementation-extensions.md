@@ -197,20 +197,37 @@
 
 ---
 
-## 9. 향후 추가 예정 (미구현)
+## 9. 디버그 도구
 
-### 9.1 임시 수동 분류 picker
-- 위치 (예정): `src/_debug/manualClassificationFlow.tsx`
-- 목적: 실제 LLM 분류 어댑터가 연결되기 전, 데모 시점에 `runClassification` 결과를 수동으로 결정하기 위한 임시 도구.
+### 9.1 임시 수동 분류 picker (구현됨)
+- 위치: `src/_debug/`
+  - `pickerBridge.ts` — module-scoped picker 등록/호출 브리지
+  - `manualClassificationFlow.ts` — `runClassificationFlow` swap-in 구현
+  - `ManualPickerHost.tsx` — picker 모달 UI (mount 시 bridge 에 등록)
+  - `picker.css` — 디버그 전용 스타일
+  - `index.ts` — 재-export
+- 영구 코드:
+  - `src/services/classifiers/classificationFlow.ts` — auto flow + `ClassificationOutcome` 타입 정의 (swap point 시그니처)
 - 동작:
   - 메모 제출 후 모달로 **성공 / 실패1 / 실패2** 선택.
-  - **성공** → UserType 4개 중 1개 직접 선택 → `source: 'mock_classifier'`
+  - **성공** → UserType 4개 중 1개 직접 선택 → `source: 'mock_classifier'`, confidence 0.87 캔드.
   - **실패1** → "사용이력 성공 / 실패2" 다시 선택
     - 사용이력 성공 → UserType 직접 선택 → `source: 'history_fallback'`
     - 실패2 → `'개인 사용자'` + `source: 'default_fallback'`
   - **실패2** → 즉시 `'개인 사용자'` + `source: 'default_fallback'`
-- 제거 비용: 폴더 삭제 + import 1줄 변경 (자동 분류 flow 로 복귀).
-- 진행 시점: 실제 분류 + 추천 + CTA + 대시보드 반영 + AppStateProvider 까지 완료 후.
+- 사유: 실제 LLM 어댑터가 연결되기 전, 데모 시점에 분류 분기를 수동으로 통제하기 위함. mock classifier 로는 LLM 정확도/신뢰도 시나리오를 자유롭게 시연하기 어려움.
+- 자동 모드로 복귀 절차:
+  1. `src/app/AppStateProvider.tsx` 의 분류 import 를 변경:
+     ```ts
+     // 현재 (manual):
+     import { runClassificationFlow } from '../_debug/manualClassificationFlow';
+     // 자동:
+     import { runClassificationFlow } from '../services/classifiers/classificationFlow';
+     ```
+  2. `src/App.tsx` 에서 `<ManualPickerHost />` 렌더링 + import 제거.
+  3. `src/_debug/` 폴더 통째로 삭제.
+- 영향 범위: 도메인 / 어댑터 / reducer / UI 컴포넌트 어느 것도 수정 불필요. swap point (`runClassificationFlow` 시그니처) 만 일치하면 양쪽 flow 호환.
+- 실제 LLM 연결 시 전체 마이그레이션 절차는 `docs/llm-integration-guide.md` 참조.
 
 ---
 
