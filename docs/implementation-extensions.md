@@ -134,9 +134,34 @@
 
 ---
 
-## 7. 향후 추가 예정 (미구현)
+## 7. Feature API (CTA mock)
 
-### 7.1 임시 수동 분류 picker
+### 7.1 응답 스키마 (`FeatureApiResult`)
+- 위치: `src/services/mockFeatureApi.ts`
+- plan 원안: §5.4 에 "초대 성공 mock 응답", "알림 규칙 생성 mock 응답", "공유 링크 생성 mock 응답" 정도만. 응답 형태 미명시.
+- 실제 구현: 모든 feature 가 동일한 `FeatureApiResult { ok: true; featureKey; resourceId; createdAt }` 반환.
+- 이유: CTA 후 `applyCtaToDashboard` 가 어차피 feature 별 분기를 가지고 있어, API 측에서는 "성공 + 시점" 정도만 알려주면 충분. 간결한 단일 형태.
+
+### 7.2 항상 성공 (failure 시뮬레이션 없음)
+- plan 원안: 실패 케이스 명시 없음
+- 실제 구현: 모든 호출이 성공 응답 반환. 네트워크 오류, rate limit, validation 실패 등 시뮬레이션 안 함.
+- 이유: 데모 흐름 안정성 우선. 추후 데모 시나리오 확장 시 실패 케이스 추가 가능.
+
+### 7.3 인위적 지연 (250ms)
+- plan 원안: 명시 없음
+- 실제 구현: 모든 호출에 `ARTIFICIAL_DELAY_MS = 250` 만큼 지연.
+- 이유: UI 가 로딩 상태 (버튼 disabled / 스피너) 를 잠깐이라도 표시하도록. 즉시 반환하면 사용자가 클릭→갱신 순간이 너무 매끄러워 변화를 인지하기 어려움. 실제 API 호출 느낌 유지.
+
+### 7.4 명명된 메서드 + 디스패처 병행
+- 위치: `mockFeatureApi.ts`
+- 실제 구현: `mockFeatureApi.inviteTeamMember() / createNotificationRule() / createShareLink()` 명명된 API 와, `invokeMockFeature(featureKey)` 디스패처를 함께 export.
+- 이유: plan §7.1 시나리오에서 `mockFeatureApi.inviteTeamMember` 형태로 참조됨 → 명명된 메서드 유지. 한편 action handler 는 `featureKey` 로 분기하는 게 자연스러우므로 디스패처도 제공.
+
+---
+
+## 8. 향후 추가 예정 (미구현)
+
+### 8.1 임시 수동 분류 picker
 - 위치 (예정): `src/_debug/manualClassificationFlow.tsx`
 - 목적: 실제 LLM 분류 어댑터가 연결되기 전, 데모 시점에 `runClassification` 결과를 수동으로 결정하기 위한 임시 도구.
 - 동작:
