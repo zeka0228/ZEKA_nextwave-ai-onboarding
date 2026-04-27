@@ -1,17 +1,47 @@
-export function ContentCreateModal() {
+import { ContentForm } from './ContentForm';
+import { ContentTypeTabs } from './ContentTypeTabs';
+
+interface ContentCreateModalProps {
+  onClose: () => void;
+}
+
+export function ContentCreateModal({ onClose }: ContentCreateModalProps) {
   return (
-    <section className="card card-wide" aria-labelledby="content-create-title">
-      <div className="card-header">
-        <div>
-          <p className="eyebrow">Placeholder</p>
-          <h2 id="content-create-title">ContentCreateModal</h2>
+    <div
+      className="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="content-create-title"
+      onClick={onClose}
+    >
+      <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+        <div className="modal-header">
+          <div>
+            <p className="eyebrow">메모 작성</p>
+            <h2 id="content-create-title">새 메모 만들기</h2>
+          </div>
+          <button
+            className="ghost-button modal-close"
+            type="button"
+            onClick={onClose}
+            aria-label="닫기"
+          >
+            ×
+          </button>
         </div>
-        <span className="status-pill">Modal shell</span>
+
+        <ContentTypeTabs activeType="memo" />
+        <ContentForm />
+
+        <div className="modal-footer">
+          <button className="ghost-button" type="button" onClick={onClose}>
+            취소
+          </button>
+          <button className="primary-button" type="button">
+            생성 완료
+          </button>
+        </div>
       </div>
-      <p>
-        메모/일정 작성 모달이 들어갈 영역입니다. Step 1에서는 입력, 분류,
-        저장 로직을 구현하지 않습니다.
-      </p>
-    </section>
+    </div>
   );
 }

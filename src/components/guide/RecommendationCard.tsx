@@ -1,20 +1,39 @@
+import { AnalysisReasonPanel } from '../ai/AnalysisReasonPanel';
+import { AnalysisStatus } from '../ai/AnalysisStatus';
+import { ClassificationBadge } from '../ai/ClassificationBadge';
+import { GuideActions } from './GuideActions';
+
+const analysisPoints = [
+  "이번 메모의 주제: '회의 준비'",
+  '키워드 분석: 회의 / 팀원 / 공유 등 업무 협업 맥락',
+  '팀원 협업 활용 가능성이 높은 사용자',
+];
+
+const keywords = ['회의', '팀원', '공유'];
+
 export function RecommendationCard() {
   return (
-    <section className="card card-highlight" aria-labelledby="recommendation-title">
+    <section className="card card-highlight recommendation-card" aria-labelledby="recommendation-title">
       <div className="card-header">
         <div>
-          <p className="eyebrow">Placeholder</p>
-          <h2 id="recommendation-title">RecommendationCard</h2>
+          <p className="eyebrow">AI 가이드</p>
+          <h2 id="recommendation-title">김개발01님, 환영합니다!</h2>
         </div>
-        <span className="status-pill">AI guide</span>
+        <AnalysisStatus state="done" />
       </div>
-      <p>
-        user_type 분석 결과와 추천 CTA가 표시될 영역입니다. 추천 로직과 CTA
-        동작은 이후 단계에서 연결합니다.
-      </p>
-      <button className="secondary-button" type="button">
-        CTA placeholder
-      </button>
+
+      <ClassificationBadge userType="직장인" confidence={0.87} />
+
+      <AnalysisReasonPanel keywords={keywords} points={analysisPoints} />
+
+      <div className="recommendation-summary">
+        <p className="recommendation-headline">동료와 함께하면 더 효율적이에요!</p>
+        <p className="recommendation-description">
+          방금 만든 내용을 팀원에게 바로 공유할 수 있어요.
+        </p>
+      </div>
+
+      <GuideActions cta="팀원 초대하기" />
     </section>
   );
 }
