@@ -83,9 +83,60 @@
 
 ---
 
-## 6. 향후 추가 예정 (미구현)
+## 6. Dashboard
 
-### 6.1 임시 수동 분류 picker
+### 6.1 mock 지표 초기값 (`initialDashboardMetrics`)
+- 위치: `src/domain/dashboard/mockDashboardMetrics.ts`
+- plan 원안: §6.3 "이번 주 데이터 헤더 04.20 - 04.26" 정도만 명시. 구체 수치는 명시 없음.
+- 실제 구현: 와이어프레임 step 3 기반으로 결정.
+  - `totalFocusMinutes`: 2325 (38h 45m)
+  - `completionRate`: 75
+  - `notificationAdoptionRate`: 10
+  - `deliveryRate`: 92
+  - `teamFeatureUsageRate`: 60 (와이어프레임 Key 범례 "협업 사용률 60% +15%" 항목)
+- 이유: plan 미상세 부분을 와이어프레임에 맞춰 보완.
+
+### 6.2 CTA 반영 delta 값 (`ctaDeltas`)
+- 위치: `mockDashboardMetrics.ts`
+- plan 원안: §6.2 "mock delta 표시" 라고만 명시. 구체 수치 없음.
+- 실제 구현:
+  - `team_invite`: `teamFeatureUsageRate` +15, `deliveryRate` +3
+  - `notification_rule`: `notificationAdoptionRate` +20, `completionRate` +5
+  - `note_share`: `deliveryRate` +5
+- 이유: 데모에서 가시적 변화를 만들기 위해 한 자릿수 후반 ~ 중반 수치로 설정.
+
+### 6.3 metric clamp [0, 100]
+- 위치: `applyCtaToDashboard.ts` 의 `applyDeltas`
+- plan 원안: 명시 없음
+- 실제 구현: percentage 필드 (`completionRate`, `notificationAdoptionRate`, `deliveryRate`, `teamFeatureUsageRate`) 는 [0, 100] 으로 clamp. `totalFocusMinutes` 는 0 이상 유지.
+- 이유: 반복 CTA 수락 시 100% 초과 방지. 데모 안정성.
+
+### 6.4 seed `completedWorks` / `projectDriveItems`
+- 위치: `mockDashboardMetrics.ts`
+- plan 원안: 명시 없음
+- 실제 구현: 와이어프레임 step 3 항목 중 **CTA 결과로 추가되는 항목 제외** 한 baseline 만 seed 로 포함.
+  - `completedWorks`: 회의 (설계 검토) 04.25, 미팅 (디자인 회의) 04.26
+  - `projectDriveItems`: 프로젝트개_계획_v0.3.pdf 04.24, 김개_프로젝트_레퍼런스 04.25
+  - 와이어프레임의 "04.24 [팀 초대 완료]" 는 `team_invite` CTA 결과 → seed 제외.
+- 이유: plan §6.2 "ContentList 에 [팀 초대 완료] 추가" 와의 중복 방지. CTA 반영 함수의 추가 동작 검증을 pre-CTA 상태에서 시작하도록.
+
+### 6.5 정적 UI 와 도메인 seed 일시적 불일치
+- 위치: `src/components/content/ContentList.tsx` (정적), `mockDashboardMetrics.ts` (seed)
+- 현재: 정적 UI 의 `ContentList` 는 와이어프레임 step 3 그대로 3개 항목 (회의, 미팅, [팀 초대 완료]) 표시. 도메인 seed 는 2개 (CTA 결과 제외).
+- 이유: 정적 UI 는 와이어프레임 충실 재현, 도메인은 CTA 추가 동작 검증을 위해 baseline 으로 시작.
+- 해소 시점: `AppStateProvider` 도입 시 정적 placeholder 가 `dashboard.completedWorks` / `projectDriveItems` 를 읽도록 교체되며 자동 정합화.
+
+### 6.6 CTA 시 `DashboardEvent` 적재
+- 위치: `applyCtaToDashboard.ts`
+- plan 원안: §3.3 transition 의 `GUIDE_ACCEPTED` → "dashboard 이벤트/지표/목록 반영" 정도. 이벤트 형식 미명시.
+- 실제 구현: 각 분기에서 `type: 'feature_used'` 이벤트를 `events` 에 append. 이벤트 title 형식 `[팀 초대] ${content.title}` 등.
+- 이유: plan transition 명세를 구체화. 향후 활동 로그/감사 표시에 활용 가능.
+
+---
+
+## 7. 향후 추가 예정 (미구현)
+
+### 7.1 임시 수동 분류 picker
 - 위치 (예정): `src/_debug/manualClassificationFlow.tsx`
 - 목적: 실제 LLM 분류 어댑터가 연결되기 전, 데모 시점에 `runClassification` 결과를 수동으로 결정하기 위한 임시 도구.
 - 동작:
