@@ -199,6 +199,15 @@
 - 실제 구현: `userId: 'demo_user'`, `displayName: '김개발01'` 하드코딩.
 - 이유: 와이어프레임 step 2 "🎉 김개발01님, 환영합니다!" 와 일치시키기 위함. 로그인 / 사용자 식별 로직은 MVP 외 영역.
 
+### 8.7 `RESET_STATE` action / `actions.resetState()`
+- 위치: `appReducer.ts`, `AppStateProvider.tsx`
+- plan 원안 §3.3: 명시 없음
+- 실제 구현:
+  - reducer 에 `RESET_STATE` action 추가 → `createInitialAppState()` 반환
+  - `actions.resetState()` 가 `clearPersistedState()` + `dispatch({ type: 'RESET_STATE' })` 동시 처리 (storage 와 in-memory state 양쪽 한 번에 초기화)
+- 이유: 디버그 도구 (수동 picker §9.1) 의 "영속 초기화" 기능을 위해 도입. 페이지 새로고침 없이 즉시 초기 상태로 복귀할 수 있는 경로가 필요.
+- picker 제거 후에도 보존: 일반 목적 primitive 로 가치 있음 (향후 로그아웃 / 온보딩 재시작 / E2E 테스트 fixture 등에 재사용 가능). 완전한 삭제를 원하면 §9.1 picker 제거 시 `RESET_STATE` action + `resetState` 함께 제거 가능.
+
 ---
 
 ## 9. 디버그 도구
@@ -219,6 +228,10 @@
     - 사용이력 성공 → UserType 직접 선택 → `source: 'history_fallback'`
     - 실패2 → `'개인 사용자'` + `source: 'default_fallback'`
   - **실패2** → 즉시 `'개인 사용자'` + `source: 'default_fallback'`
+- 부가 기능: **영속 초기화 버튼** (모달 헤더 우측)
+  - 클릭 시 confirm → `actions.resetState()` 호출 → localStorage + in-memory state 동시 초기화
+  - 페이지 새로고침 없이 즉시 fresh state 로 복귀 (데모 반복 시 빠르게 깨끗한 상태 확보)
+  - 진행 중이던 picker promise 는 의도적으로 resolve 안 함 (race 회피) — 매달린 async frame 은 GC 정리
 - 사유: 실제 LLM 어댑터가 연결되기 전, 데모 시점에 분류 분기를 수동으로 통제하기 위함. mock classifier 로는 LLM 정확도/신뢰도 시나리오를 자유롭게 시연하기 어려움.
 - 자동 모드로 복귀 절차:
   1. `src/app/AppStateProvider.tsx` 의 분류 import 를 변경:

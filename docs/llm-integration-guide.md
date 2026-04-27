@@ -55,6 +55,18 @@ export default function App() {
 rm -rf src/_debug
 ```
 
+### 1-4. (선택) `RESET_STATE` action / `actions.resetState()` 처리
+
+picker 가 사용하던 영속 초기화 기능 (`appReducer.ts` 의 `RESET_STATE` action + `AppStateProvider` 의 `resetState`) 은 picker 제거 후 호출 지점이 사라짐.
+
+선택지:
+- **A. 보존 (권장)**: 일반 목적 primitive 로 가치 있음 — 향후 로그아웃 / 온보딩 재시작 / E2E 테스트 fixture / 새 디버그 도구에 재사용 가능. 사용 안 해도 dead weight 거의 없음.
+- **B. 삭제**: 완전한 정리 우선 시
+  - `src/app/appReducer.ts` 에서 `RESET_STATE` 케이스 + 해당 action 타입 라인 제거
+  - `src/app/AppStateProvider.tsx` 에서 `resetState` `useCallback` + actions 객체에서 제거
+  - `AppActions` 인터페이스에서 `resetState: () => void;` 제거
+  - `clearPersistedState` import 가 더 이상 안 쓰이면 제거
+
 이 시점에서 동작은 **`mockClassifier` 기반 자동 분류** 로 돌아감. LLM 은 아직 미연결.
 
 ---
@@ -297,6 +309,7 @@ LLM 연결 후 의미 변경/제거되는 항목:
 | **§5.1** 모달 위치 (이미 해소됨) | 유지 (이력 기록용) |
 | **§8.1** `DEMO_ANALYSIS_DELAY_MS` | Step 4 에서 제거됐으므로 항목 삭제 |
 | **§8.2** ANALYSIS_FAILED action | 유지 (LLM 실패 시 더 의미 있어짐) |
+| **§8.7** `RESET_STATE` / `resetState` | Step 1-4 결정에 따름 (보존 시 유지, 삭제 시 항목 제거) |
 | **§9** 디버그 도구 (manual picker) | Step 1 에서 제거됐으므로 섹션 전체 삭제 |
 
 ---
@@ -347,7 +360,7 @@ LLM 이 stream 으로 응답하면 "분석 중..." UX 가 더 자연스러워짐
 
 ## 완료 체크리스트
 
-- [ ] **Step 1**: manual picker 제거 (3 곳 변경)
+- [ ] **Step 1**: manual picker 제거 (3 곳 변경) + (선택) `RESET_STATE` / `resetState` 보존 또는 삭제 결정
 - [ ] **Step 2**: `llmClassifierAdapter` 실구현 (fetch + schema validation + abort)
 - [ ] **Step 3**: `classifyContent` default adapter + `classifierSource` 변경
 - [ ] **Step 4**: `DEMO_ANALYSIS_DELAY_MS` 제거
