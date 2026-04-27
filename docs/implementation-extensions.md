@@ -50,7 +50,8 @@
   ```
 - 실제 구현: `globalFeaturePriority` 를 순회하며, 미사용 feature 의 후보 가이드에 대해 다시 `canShowGuide` 검증 통과한 첫 번째 항목을 반환. 통과 못 하면 다음 feature 로 진행.
 - 이유: plan 코드는 fallback 가이드의 dismiss 여부 검증 누락. dismissed 또는 already-used 인 가이드가 노출될 가능성 차단.
-- 정상 시나리오에서는 결과 동일. 엣지 케이스 (fallback 도 dismissed 인 경우) 만 더 안전하게 처리.
+- **핵심 버그**: plan 원안 코드는 "나중에 하기" 시점에서 **무한 루프** 발생. "나중에 하기" 는 `usedFeatures` 를 증가시키지 않으므로 `globalFeaturePriority.find(k => usedFeatures[k] === 0)` 가 여전히 primary 의 featureKey 를 첫 매치로 반환. 결국 `findGuideByFeature` 가 방금 dismissed 한 동일 가이드를 다시 돌려줌 → 사용자에게 같은 추천이 계속 노출됨.
+- 정상 시나리오에서는 결과 동일. "나중에 하기" 1회만으로도 plan 원안은 무한 루프, 강화된 코드는 cross-userType fallback 으로 자연 진행.
 
 ---
 
@@ -60,7 +61,12 @@
 - 위치: `src/services/storage.ts`
 - plan 원안 §3: "사용자 상태, 콘텐츠, 추천 이력, 대시보드 이벤트는 localStorage 에 저장"
 - 실제 구현: `PersistedAppState = { user, contents, guideImpressions, dashboard }` — `dashboard` 를 통째로 영속 (events 만 분리하지 않음).
-- 이유: `dashboard.events` 만 저장하면 `metrics` 와 어긋남. CTA 로 변경된 metrics 가 새로고침 시 리셋되어 events 와 mismatch 가 생김. 데모 일관성 우선.
+- 이유: CTA 가 `applyCtaToDashboard` 에서 **`metrics` 를 직접 수정** 함 (예: `team_invite` 수락 → `teamFeatureUsageRate` +15, `deliveryRate` +3). plan 의 "events 만 영속" 을 그대로 따르면 다음 버그 발생:
+  - 새로고침 시 `metrics` 는 초기 mock 값으로 reset 됨
+  - 반면 `events` (예: "팀 초대 완료") 는 영속되어 그대로 노출
+  - 결과: 사용자가 분명히 CTA 를 눌렀는데 stats 는 그대로 → 정책 붕괴
+  - 활동 이력과 지표가 서로 모순되는 상태
+- 따라서 `metrics` + `events` + `completedWorks` + `projectDriveItems` 등 dashboard 가 한 묶음으로 항상 함께 저장/복원되도록 `dashboard` 통째로 영속.
 
 ### 4.2 임시 상태 영속 제외
 - 영속 제외:
@@ -107,6 +113,7 @@
   - `notification_rule`: `notificationAdoptionRate` +20, `completionRate` +5
   - `note_share`: `deliveryRate` +5
 - 이유: 데모에서 가시적 변화를 만들기 위해 한 자릿수 후반 ~ 중반 수치로 설정.
+- ⚠️ 위 delta 가 **임의 mock 수치가 아니라 실제 의미 있는 변동량을 나타내야 하는 경우 수정 필요**. 현재는 데모 시각화 전제로 둔 값.
 
 ### 6.3 metric clamp [0, 100]
 - 위치: `applyCtaToDashboard.ts` 의 `applyDeltas`
