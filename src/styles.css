@@ -148,6 +148,13 @@ ul {
   background: #f5f7fb;
 }
 
+.primary-button:disabled,
+.secondary-button:disabled,
+.ghost-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .modal-close {
   width: 32px;
   height: 32px;

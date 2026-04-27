@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useAppState } from '../app/AppStateProvider';
 import { ContentCreateModal } from '../components/content/ContentCreateModal';
 import { ContentList } from '../components/content/ContentList';
 import { ProjectDriveMock } from '../components/dashboard/ProjectDriveMock';
@@ -15,7 +15,7 @@ const legendItems = [
 ];
 
 export function DashboardScreen() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { state, actions } = useAppState();
 
   return (
     <>
@@ -24,12 +24,12 @@ export function DashboardScreen() {
           <div>
             <p className="eyebrow">NextWave AI Onboarding</p>
             <h1>이번 주 데이터</h1>
-            <p className="dashboard-period">04.20 - 04.26</p>
+            <p className="dashboard-period">{state.dashboard.weekRangeLabel}</p>
           </div>
           <button
             className="primary-button"
             type="button"
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={actions.openCreateModal}
           >
             새로 만들기
           </button>
@@ -57,9 +57,7 @@ export function DashboardScreen() {
         </aside>
       </main>
 
-      {isCreateModalOpen && (
-        <ContentCreateModal onClose={() => setIsCreateModalOpen(false)} />
-      )}
+      {state.ui.isCreateModalOpen && <ContentCreateModal />}
     </>
   );
 }

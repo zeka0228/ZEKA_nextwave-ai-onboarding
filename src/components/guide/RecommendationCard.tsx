@@ -1,39 +1,99 @@
+import { useAppState } from '../../app/AppStateProvider';
 import { AnalysisReasonPanel } from '../ai/AnalysisReasonPanel';
 import { AnalysisStatus } from '../ai/AnalysisStatus';
 import { ClassificationBadge } from '../ai/ClassificationBadge';
 import { GuideActions } from './GuideActions';
 
-const analysisPoints = [
-  "이번 메모의 주제: '회의 준비'",
-  '키워드 분석: 회의 / 팀원 / 공유 등 업무 협업 맥락',
-  '팀원 협업 활용 가능성이 높은 사용자',
-];
-
-const keywords = ['회의', '팀원', '공유'];
-
 export function RecommendationCard() {
+  const { state } = useAppState();
+
+  if (state.ui.isAnalyzing) {
+    return (
+      <section
+        className="card card-highlight recommendation-card"
+        aria-labelledby="recommendation-title"
+      >
+        <div className="card-header">
+          <div>
+            <p className="eyebrow">AI 가이드</p>
+            <h2 id="recommendation-title">
+              {state.user.displayName}님, 환영합니다!
+            </h2>
+          </div>
+          <AnalysisStatus state="analyzing" />
+        </div>
+        <p className="recommendation-description">
+          방금 작성하신 내용을 분석하고 있어요. 잠시만 기다려주세요.
+        </p>
+      </section>
+    );
+  }
+
+  const classification = state.activeClassification;
+  const recommendation = state.activeRecommendation;
+
+  if (!classification || !recommendation) {
+    return (
+      <section
+        className="card card-highlight recommendation-card"
+        aria-labelledby="recommendation-title"
+      >
+        <div className="card-header">
+          <div>
+            <p className="eyebrow">AI 가이드</p>
+            <h2 id="recommendation-title">
+              {state.user.displayName}님, 환영합니다!
+            </h2>
+          </div>
+        </div>
+        <p className="recommendation-description">
+          {state.ui.analysisError
+            ? `분석 중 문제가 발생했어요: ${state.ui.analysisError}`
+            : '메모나 일정을 작성하면 맞춤 추천을 보여드릴게요.'}
+        </p>
+      </section>
+    );
+  }
+
+  const lastContent = state.contents[state.contents.length - 1];
+  const points = [
+    lastContent ? `이번 메모의 주제: '${lastContent.title}'` : null,
+    classification.reasoning ??
+      `${classification.userType} 맥락이 감지되었습니다.`,
+    `추천 가이드: ${recommendation.title}`,
+  ].filter((point): point is string => Boolean(point));
+
   return (
-    <section className="card card-highlight recommendation-card" aria-labelledby="recommendation-title">
+    <section
+      className="card card-highlight recommendation-card"
+      aria-labelledby="recommendation-title"
+    >
       <div className="card-header">
         <div>
           <p className="eyebrow">AI 가이드</p>
-          <h2 id="recommendation-title">김개발01님, 환영합니다!</h2>
+          <h2 id="recommendation-title">
+            {state.user.displayName}님, 환영합니다!
+          </h2>
         </div>
         <AnalysisStatus state="done" />
       </div>
 
-      <ClassificationBadge userType="직장인" confidence={0.87} />
+      <ClassificationBadge
+        userType={classification.userType}
+        confidence={classification.confidence}
+      />
 
-      <AnalysisReasonPanel keywords={keywords} points={analysisPoints} />
+      <AnalysisReasonPanel
+        keywords={classification.keywords}
+        points={points}
+      />
 
       <div className="recommendation-summary">
-        <p className="recommendation-headline">동료와 함께하면 더 효율적이에요!</p>
-        <p className="recommendation-description">
-          방금 만든 내용을 팀원에게 바로 공유할 수 있어요.
-        </p>
+        <p className="recommendation-headline">{recommendation.title}</p>
+        <p className="recommendation-description">{recommendation.description}</p>
       </div>
 
-      <GuideActions cta="팀원 초대하기" />
+      <GuideActions cta={recommendation.cta} />
     </section>
   );
 }

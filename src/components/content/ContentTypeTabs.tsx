@@ -1,7 +1,8 @@
-type ContentType = 'memo' | 'schedule';
+import type { ContentType } from '../../domain/types';
 
 interface ContentTypeTabsProps {
-  activeType?: ContentType;
+  activeType: ContentType;
+  onChange?: (type: ContentType) => void;
 }
 
 const tabs: Array<{ id: ContentType; label: string }> = [
@@ -9,7 +10,7 @@ const tabs: Array<{ id: ContentType; label: string }> = [
   { id: 'schedule', label: '일정' },
 ];
 
-export function ContentTypeTabs({ activeType = 'memo' }: ContentTypeTabsProps) {
+export function ContentTypeTabs({ activeType, onChange }: ContentTypeTabsProps) {
   return (
     <div className="tab-list" role="tablist" aria-label="콘텐츠 유형">
       {tabs.map((tab) => (
@@ -19,6 +20,7 @@ export function ContentTypeTabs({ activeType = 'memo' }: ContentTypeTabsProps) {
           role="tab"
           aria-selected={activeType === tab.id}
           type="button"
+          onClick={() => onChange?.(tab.id)}
         >
           {tab.label}
         </button>

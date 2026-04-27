@@ -75,11 +75,10 @@
 
 ## 5. UI / 상태
 
-### 5.1 모달 토글 상태 위치 (임시)
-- 위치: `src/screens/DashboardScreen.tsx`
+### 5.1 모달 토글 상태 위치
+- 위치: `src/app/AppStateProvider.tsx` (`state.ui.isCreateModalOpen`)
 - plan 원안 §3.2: `AppState.ui.isCreateModalOpen` 으로 전역 상태 정의
-- 실제 구현: 현재는 `DashboardScreen` 내부 `useState` 로 임시 보유.
-- 이유: `AppStateProvider` 도입 전 단계. 전역 상태 컨텍스트 만들 시점에 `AppState.ui` 로 이전 예정.
+- 실제 구현: plan 따라 `AppStateProvider` 의 reducer 가 관리. ✅ **해소됨** (이전엔 임시로 `DashboardScreen` 내부 `useState` 로 보유했었음 → AppStateProvider 도입과 함께 정리)
 
 ---
 
@@ -120,11 +119,10 @@
   - 와이어프레임의 "04.24 [팀 초대 완료]" 는 `team_invite` CTA 결과 → seed 제외.
 - 이유: plan §6.2 "ContentList 에 [팀 초대 완료] 추가" 와의 중복 방지. CTA 반영 함수의 추가 동작 검증을 pre-CTA 상태에서 시작하도록.
 
-### 6.5 정적 UI 와 도메인 seed 일시적 불일치
-- 위치: `src/components/content/ContentList.tsx` (정적), `mockDashboardMetrics.ts` (seed)
-- 현재: 정적 UI 의 `ContentList` 는 와이어프레임 step 3 그대로 3개 항목 (회의, 미팅, [팀 초대 완료]) 표시. 도메인 seed 는 2개 (CTA 결과 제외).
-- 이유: 정적 UI 는 와이어프레임 충실 재현, 도메인은 CTA 추가 동작 검증을 위해 baseline 으로 시작.
-- 해소 시점: `AppStateProvider` 도입 시 정적 placeholder 가 `dashboard.completedWorks` / `projectDriveItems` 를 읽도록 교체되며 자동 정합화.
+### 6.5 정적 UI 와 도메인 seed 정합화
+- 위치: `ContentList.tsx`, `ProjectDriveMock.tsx`, `StatsPanel.tsx`
+- 실제 구현: ✅ **해소됨**. 위 컴포넌트들이 `useAppState()` 로 `state.dashboard` 를 직접 읽도록 전환됨. 정적 mock 배열 제거.
+- 결과: 초기 화면은 seed (회의, 미팅 + 파일, 폴더 2개씩). CTA 수락 시 `[팀 초대 완료]` 등이 list 에 append 되며 wireframe step 3 모습으로 도달.
 
 ### 6.6 CTA 시 `DashboardEvent` 적재
 - 위치: `applyCtaToDashboard.ts`
@@ -159,9 +157,49 @@
 
 ---
 
-## 8. 향후 추가 예정 (미구현)
+## 8. AppStateProvider
 
-### 8.1 임시 수동 분류 picker
+### 8.1 데모 분석 지연 (`DEMO_ANALYSIS_DELAY_MS`)
+- 위치: `src/app/AppStateProvider.tsx` (`submitContent` 내부)
+- plan 원안 §4.7: "mock classifier 는 지연 없이 응답"
+- 실제 구현: `Promise.all([classifyContent(...), delay(800)])` — 분석 자체는 즉시 끝나도 800ms 동안 "AI 분석 중" 상태 유지.
+- 이유: mock classifier 가 즉시 반환하면 UI 상태 변화가 너무 빨라 "분석 중 → 결과" 전환을 사용자가 인지하지 못함. 와이어프레임 step 1 의 "AI 분석 중..." 상태를 데모에서 가시화하기 위한 표시용 지연. 실제 LLM adapter 로 교체 시 이 지연은 제거 예정.
+
+### 8.2 `ANALYSIS_FAILED` action 추가
+- 위치: `appReducer.ts`
+- plan 원안 §3.3: `CREATE_CONTENT_SUBMIT → CLASSIFICATION_RESOLVED` 만 명시. 실패 transition 명시 없음 (fallback 으로 흡수되도록 설계).
+- 실제 구현: dispatcher 가 throw 한 경우를 위해 별도 `ANALYSIS_FAILED` action 추가. `state.ui.analysisError` 에 메시지 저장.
+- 이유: `classifyContent` 자체는 null 로 흡수하지만, 그 외 예외 (현재는 발생할 곳 없음) 가 새어 나올 가능성 대비. 안전망.
+
+### 8.3 stateRef 패턴 (async stale closure 회피)
+- 위치: `AppStateProvider.tsx`
+- 실제 구현: `const stateRef = useRef(state)` + `useEffect` 로 매 렌더 동기화. async action 내부에서는 `stateRef.current` 로 최신 state 읽음.
+- 이유: `useCallback` 클로저가 캡처한 `state` 는 호출 시점이 아닌 정의 시점의 값. 분류 await 후 `selectRecommendation` 에 넘길 `usedFeatures` 등이 stale 일 수 있음. ref 패턴으로 회피.
+- 대안 검토: reducer 안에서 모든 derive 처리하는 방식도 있지만, async + 외부 호출이 reducer 에 들어가면 순수성 깨짐 → 현재 구조 유지.
+
+### 8.4 CTA 와 content 연결 — last submitted
+- 위치: `acceptCta` 내부
+- plan 원안: 어떤 content 와 연결할지 명시 없음
+- 실제 구현: `state.contents[length - 1]` (가장 최근 제출 content) 와 `applyCtaToDashboard` 호출.
+- 이유: 분류 → 추천 → CTA 흐름은 동일 content 기반 (1 content → 1 분류 → 1 추천 → 1 CTA). 다른 content 가 끼어들면 새 분류가 활성 추천을 덮어쓰는 reducer 동작으로 자연 정리됨.
+- 한계: 매우 빠른 연속 입력 (분류 도중 또 제출) 케이스는 현재 보호 장치 없음. 일반 데모 흐름에서는 문제 없음.
+
+### 8.5 새로고침 시 추천/분류 리셋
+- 위치: `loadInitialState`
+- 실제 구현: persist 에서 user/contents/guideImpressions/dashboard 만 복원. `activeClassification`, `activeRecommendation`, `ui` 는 항상 초기 상태로 시작.
+- 이유: plan §4.2 (storage 영속 제외 결정) 와 일관. 새로고침 후에는 사용자가 새 메모를 작성해야 추천이 다시 표시됨. 데모 시작점이 매번 깨끗.
+
+### 8.6 데모 사용자 (`displayName`)
+- 위치: `appReducer.ts` (`createInitialAppState`)
+- plan 원안: 명시 없음
+- 실제 구현: `userId: 'demo_user'`, `displayName: '김개발01'` 하드코딩.
+- 이유: 와이어프레임 step 2 "🎉 김개발01님, 환영합니다!" 와 일치시키기 위함. 로그인 / 사용자 식별 로직은 MVP 외 영역.
+
+---
+
+## 9. 향후 추가 예정 (미구현)
+
+### 9.1 임시 수동 분류 picker
 - 위치 (예정): `src/_debug/manualClassificationFlow.tsx`
 - 목적: 실제 LLM 분류 어댑터가 연결되기 전, 데모 시점에 `runClassification` 결과를 수동으로 결정하기 위한 임시 도구.
 - 동작:
