@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './picker.css';
+import { useAppState } from '../app/AppStateProvider';
 import type { ClassificationInput, UserType } from '../domain/types';
 import type { ClassificationOutcome } from '../services/classifiers/classificationFlow';
 import { registerPicker, unregisterPicker } from './pickerBridge';
@@ -45,6 +46,7 @@ function buildSuccessOutcome(
 }
 
 export function ManualPickerHost() {
+  const { actions } = useAppState();
   const [request, setRequest] = useState<ActiveRequest | null>(null);
   const [step, setStep] = useState<Step>('primary');
   const [pendingSource, setPendingSource] = useState<PickedSource>(
@@ -99,6 +101,18 @@ export function ManualPickerHost() {
     setStep((prev) => (prev === 'select_user_type' || prev === 'secondary' ? 'primary' : prev));
   };
 
+  const onResetPersistence = () => {
+    const confirmed = window.confirm(
+      '♚♚사용자☆콘텐츠☆대시보드☆dismiss♚♚ 이력☜☜이 $$모두$$ ※초기화됩니다.☏☎☏☎ \n새♬로♬고♬침♬ 없이 ☞☞즉시☜☜ 적♥용. §§진행할까요?§§',
+    );
+    if (!confirmed) return;
+    // 진행 중이던 picker 의 promise 는 일부러 resolve 하지 않음.
+    // submitContent 가 await 에서 매달려있게 두면 reset 결과가 ANALYSIS_RESOLVED 로
+    // 덮어쓰여질 race 가 사라짐. 매달린 frame 은 다음 GC 사이클에서 정리됨.
+    setRequest(null);
+    actions.resetState();
+  };
+
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true">
       <div className="modal-card debug-picker-card">
@@ -107,6 +121,14 @@ export function ManualPickerHost() {
             <p className="eyebrow debug-eyebrow">DEBUG · 수동 분류</p>
             <h2>분류 결과 직접 선택</h2>
           </div>
+          <button
+            className="ghost-button debug-reset-button"
+            type="button"
+            onClick={onResetPersistence}
+            title="localStorage 를 비우고 페이지를 새로고침합니다"
+          >
+            영속 초기화
+          </button>
         </div>
 
         <div className="debug-input-summary">

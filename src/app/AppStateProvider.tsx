@@ -18,7 +18,11 @@ import type {
   GuideImpression,
 } from '../domain/types';
 import { invokeMockFeature } from '../services/mockFeatureApi';
-import { loadPersistedState, savePersistedState } from '../services/storage';
+import {
+  clearPersistedState,
+  loadPersistedState,
+  savePersistedState,
+} from '../services/storage';
 import { appReducer, createInitialAppState } from './appReducer';
 // 분류 flow swap point — 임시 manual picker. 자동 모드로 복귀하려면
 // 아래 import 를 '../services/classifiers/classificationFlow' 로 변경하고
@@ -41,6 +45,7 @@ export interface AppActions {
   acceptCta: () => Promise<void>;
   dismissGuide: () => void;
   neverShowGuide: () => void;
+  resetState: () => void;
 }
 
 interface AppContextValue {
@@ -232,6 +237,11 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     });
   }, []);
 
+  const resetState = useCallback(() => {
+    clearPersistedState();
+    dispatch({ type: 'RESET_STATE' });
+  }, []);
+
   const actions = useMemo<AppActions>(
     () => ({
       openCreateModal,
@@ -240,6 +250,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       acceptCta,
       dismissGuide,
       neverShowGuide,
+      resetState,
     }),
     [
       openCreateModal,
@@ -248,6 +259,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       acceptCta,
       dismissGuide,
       neverShowGuide,
+      resetState,
     ],
   );
 

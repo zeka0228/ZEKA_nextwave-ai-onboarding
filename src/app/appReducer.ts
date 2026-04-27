@@ -32,7 +32,8 @@ export type AppAction =
       };
     }
   | { type: 'GUIDE_DISMISSED'; payload: { guideId: string } }
-  | { type: 'GUIDE_NEVER_SHOW'; payload: { guideId: string } };
+  | { type: 'GUIDE_NEVER_SHOW'; payload: { guideId: string } }
+  | { type: 'RESET_STATE' };
 
 export function createInitialAppState(): AppState {
   return {
@@ -160,6 +161,9 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ),
         activeRecommendation: null,
       };
+
+    case 'RESET_STATE':
+      return createInitialAppState();
 
     case 'GUIDE_NEVER_SHOW':
       return {
