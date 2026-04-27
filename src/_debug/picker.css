@@ -1,0 +1,97 @@
+.debug-picker-card {
+  border: 2px solid #ff9d4a;
+}
+
+.debug-eyebrow {
+  color: #c95a00 !important;
+}
+
+.debug-input-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fff7e6;
+  border: 1px solid #ffd98a;
+  margin-bottom: 16px;
+}
+
+.debug-input-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8a5a00;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.debug-input-summary strong {
+  font-size: 14px;
+  color: #2a3a5b;
+}
+
+.debug-input-body {
+  color: #42506a;
+  font-size: 13px;
+}
+
+.debug-picker-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.debug-picker-prompt {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2a3a5b;
+}
+
+.debug-picker-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.debug-picker-button strong {
+  font-size: 14px;
+}
+
+.debug-picker-button span {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.debug-picker-button code,
+.debug-picker-prompt code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 12px;
+  background: #f5f7fb;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.debug-picker-back {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.debug-reset-button {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #c0392b;
+  border-color: #ffa9a3;
+}
+
+.debug-reset-button:hover {
+  background: #fff0ee;
+}

@@ -1,20 +1,99 @@
+import { useAppState } from '../../app/AppStateProvider';
+import { AnalysisReasonPanel } from '../ai/AnalysisReasonPanel';
+import { AnalysisStatus } from '../ai/AnalysisStatus';
+import { ClassificationBadge } from '../ai/ClassificationBadge';
+import { GuideActions } from './GuideActions';
+
 export function RecommendationCard() {
+  const { state } = useAppState();
+
+  if (state.ui.isAnalyzing) {
+    return (
+      <section
+        className="card card-highlight recommendation-card"
+        aria-labelledby="recommendation-title"
+      >
+        <div className="card-header">
+          <div>
+            <p className="eyebrow">AI 가이드</p>
+            <h2 id="recommendation-title">
+              {state.user.displayName}님, 환영합니다!
+            </h2>
+          </div>
+          <AnalysisStatus state="analyzing" />
+        </div>
+        <p className="recommendation-description">
+          방금 작성하신 내용을 분석하고 있어요. 잠시만 기다려주세요.
+        </p>
+      </section>
+    );
+  }
+
+  const classification = state.activeClassification;
+  const recommendation = state.activeRecommendation;
+
+  if (!classification || !recommendation) {
+    return (
+      <section
+        className="card card-highlight recommendation-card"
+        aria-labelledby="recommendation-title"
+      >
+        <div className="card-header">
+          <div>
+            <p className="eyebrow">AI 가이드</p>
+            <h2 id="recommendation-title">
+              {state.user.displayName}님, 환영합니다!
+            </h2>
+          </div>
+        </div>
+        <p className="recommendation-description">
+          {state.ui.analysisError
+            ? `분석 중 문제가 발생했어요: ${state.ui.analysisError}`
+            : '메모나 일정을 작성하면 맞춤 추천을 보여드릴게요.'}
+        </p>
+      </section>
+    );
+  }
+
+  const lastContent = state.contents[state.contents.length - 1];
+  const points = [
+    lastContent ? `이번 메모의 주제: '${lastContent.title}'` : null,
+    classification.reasoning ??
+      `${classification.userType} 맥락이 감지되었습니다.`,
+    `추천 가이드: ${recommendation.title}`,
+  ].filter((point): point is string => Boolean(point));
+
   return (
-    <section className="card card-highlight" aria-labelledby="recommendation-title">
+    <section
+      className="card card-highlight recommendation-card"
+      aria-labelledby="recommendation-title"
+    >
       <div className="card-header">
         <div>
-          <p className="eyebrow">Placeholder</p>
-          <h2 id="recommendation-title">RecommendationCard</h2>
+          <p className="eyebrow">AI 가이드</p>
+          <h2 id="recommendation-title">
+            {state.user.displayName}님, 환영합니다!
+          </h2>
         </div>
-        <span className="status-pill">AI guide</span>
+        <AnalysisStatus state="done" />
       </div>
-      <p>
-        user_type 분석 결과와 추천 CTA가 표시될 영역입니다. 추천 로직과 CTA
-        동작은 이후 단계에서 연결합니다.
-      </p>
-      <button className="secondary-button" type="button">
-        CTA placeholder
-      </button>
+
+      <ClassificationBadge
+        userType={classification.userType}
+        confidence={classification.confidence}
+      />
+
+      <AnalysisReasonPanel
+        keywords={classification.keywords}
+        points={points}
+      />
+
+      <div className="recommendation-summary">
+        <p className="recommendation-headline">{recommendation.title}</p>
+        <p className="recommendation-description">{recommendation.description}</p>
+      </div>
+
+      <GuideActions cta={recommendation.cta} />
     </section>
   );
 }
