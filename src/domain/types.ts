@@ -14,6 +14,19 @@ export type FeatureKey =
   | 'notification_rule'
   | 'note_share';
 
+export interface ClassificationInput {
+  title: string;
+  content: string;
+  type: ContentType;
+}
+
+export interface LlmClassificationResult {
+  user_type: LlmUserType;
+  confidence: number;
+  reasoning?: string;
+  keywords: string[];
+}
+
 export interface FeatureFlags {
   team_invite: number;
   notification_rule: number;
