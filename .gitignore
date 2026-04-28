@@ -147,3 +147,6 @@ notes/
 
 # Claude Code 로컬 설정 (개인 권한/메모리 등)
 .claude/
+
+# 분류기 평가 결과 산출물
+eval-result*.json
