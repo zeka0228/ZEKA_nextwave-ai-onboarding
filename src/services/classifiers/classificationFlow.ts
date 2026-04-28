@@ -24,7 +24,7 @@ export async function runClassificationFlow(
   const resolved = resolveUserType({
     llmResult,
     classifications: history,
-    classifierSource: 'mock_classifier',
+    classifierSource: 'llm_adapter',
   });
 
   return {

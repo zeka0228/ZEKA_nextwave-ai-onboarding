@@ -24,12 +24,7 @@ import {
   savePersistedState,
 } from '../services/storage';
 import { appReducer, createInitialAppState } from './appReducer';
-// 분류 flow swap point — 임시 manual picker. 자동 모드로 복귀하려면
-// 아래 import 를 '../services/classifiers/classificationFlow' 로 변경하고
-// App.tsx 의 <ManualPickerHost /> 를 제거하세요.
-import { runClassificationFlow } from '../_debug/manualClassificationFlow';
-
-const DEMO_ANALYSIS_DELAY_MS = 800;
+import { runClassificationFlow } from '../services/classifiers/classificationFlow';
 
 export interface ContentDraft {
   type: ContentType;
@@ -57,10 +52,6 @@ const AppStateContext = createContext<AppContextValue | null>(null);
 
 function generateId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function loadInitialState(): AppState {
@@ -131,17 +122,14 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     dispatch({ type: 'ANALYSIS_STARTED', payload: { content } });
 
     try {
-      const [outcome] = await Promise.all([
-        runClassificationFlow(
-          {
-            title: content.title,
-            content: content.body,
-            type: content.type,
-          },
-          stateRef.current.user.classifications,
-        ),
-        delay(DEMO_ANALYSIS_DELAY_MS),
-      ]);
+      const outcome = await runClassificationFlow(
+        {
+          title: content.title,
+          content: content.body,
+          type: content.type,
+        },
+        stateRef.current.user.classifications,
+      );
 
       const currentState = stateRef.current;
 
