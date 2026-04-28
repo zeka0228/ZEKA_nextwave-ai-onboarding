@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm --version)",
       "Bash(npx tsc *)",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(gh api *)",
+      "Bash(dos2unix)"
     ]
   }
 }
