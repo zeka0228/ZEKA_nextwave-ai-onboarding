@@ -19,20 +19,8 @@ export const initialDashboardMetrics: DashboardMetrics = {
   teamFeatureUsageRate: 60,
 };
 
-const initialCompletedWorks: CompletedWork[] = [
-  {
-    id: 'work_seed_meeting_1',
-    label: '회의 (설계 검토)',
-    kind: 'meeting',
-    createdAt: seedTimestamp(25),
-  },
-  {
-    id: 'work_seed_meeting_2',
-    label: '미팅 (디자인 회의)',
-    kind: 'meeting',
-    createdAt: seedTimestamp(26),
-  },
-];
+// 사용자가 CTA 를 통해 완료한 활동만 표시. seed 데이터는 두지 않음.
+const initialCompletedWorks: CompletedWork[] = [];
 
 const initialDriveItems: ProjectDriveItem[] = [
   {
