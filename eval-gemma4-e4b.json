@@ -1,0 +1,230 @@
+{
+  "meta": {
+    "timestamp": "2026-04-28T11:54:35.853Z",
+    "model": "gemma4:e4b",
+    "baseUrl": "http://localhost:11434/v1",
+    "timeoutMs": 60000
+  },
+  "summary": {
+    "total": 12,
+    "succeeded": 12,
+    "failed": 0,
+    "accuracy": 0.75,
+    "accuracyOverall": 0.75,
+    "macroF1": 0.7733333333333333,
+    "perClass": [
+      {
+        "label": "대학생",
+        "support": 2,
+        "predicted": 3,
+        "truePositive": 2,
+        "falsePositive": 1,
+        "falseNegative": 0,
+        "precision": 0.6666666666666666,
+        "recall": 1,
+        "f1": 0.8
+      },
+      {
+        "label": "직장인",
+        "support": 2,
+        "predicted": 4,
+        "truePositive": 2,
+        "falsePositive": 2,
+        "falseNegative": 0,
+        "precision": 0.5,
+        "recall": 1,
+        "f1": 0.6666666666666666
+      },
+      {
+        "label": "프리랜서",
+        "support": 2,
+        "predicted": 2,
+        "truePositive": 2,
+        "falsePositive": 0,
+        "falseNegative": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      {
+        "label": "팀 사용자",
+        "support": 2,
+        "predicted": 2,
+        "truePositive": 2,
+        "falsePositive": 0,
+        "falseNegative": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      {
+        "label": "unknown",
+        "support": 4,
+        "predicted": 1,
+        "truePositive": 1,
+        "falsePositive": 0,
+        "falseNegative": 3,
+        "precision": 1,
+        "recall": 0.25,
+        "f1": 0.4
+      }
+    ],
+    "confusionMatrix": [
+      [
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        2,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        1,
+        2,
+        0,
+        0,
+        1
+      ]
+    ],
+    "confidenceMean": {
+      "correct": 0.9333333333333333,
+      "incorrect": 0.8666666666666667
+    },
+    "latency": {
+      "mean": 5398.5673916666665,
+      "p50": 5009.282300000006,
+      "p95": 9015.2815,
+      "max": 9015.2815
+    },
+    "difficulty": {
+      "easy": {
+        "total": 10,
+        "correct": 9,
+        "accuracy": 0.9
+      },
+      "edge": {
+        "total": 2,
+        "correct": 0,
+        "accuracy": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "qa-01",
+      "expected": "대학생",
+      "predicted": "대학생",
+      "confidence": 0.95,
+      "latencyMs": 9015.2815,
+      "difficulty": "easy"
+    },
+    {
+      "id": "qa-02",
+      "expected": "직장인",
+      "predicted": "직장인",
+      "confidence": 0.95,
+      "latencyMs": 5122.654399999999,
+      "difficulty": "easy"
+    },
+    {
+      "id": "qa-03",
+      "expected": "프리랜서",
+      "predicted": "프리랜서",
+      "confidence": 0.95,
+      "latencyMs": 5209.159799999999,
+      "difficulty": "easy"
+    },
+    {
+      "id": "qa-04",
+      "expected": "팀 사용자",
+      "predicted": "팀 사용자",
+      "confidence": 0.95,
+      "latencyMs": 5507.417799999999,
+      "difficulty": "easy"
+    },
+    {
+      "id": "qa-05",
+      "expected": "unknown",
+      "predicted": "직장인",
+      "confidence": 0.9,
+      "latencyMs": 4715.254400000002,
+      "difficulty": "edge"
+    },
+    {
+      "id": "qa-06",
+      "expected": "unknown",
+      "predicted": "직장인",
+      "confidence": 0.8,
+      "latencyMs": 5409.984800000002,
+      "difficulty": "edge"
+    },
+    {
+      "id": "qa-07",
+      "expected": "대학생",
+      "predicted": "대학생",
+      "confidence": 0.95,
+      "latencyMs": 4814.391600000003,
+      "difficulty": "easy"
+    },
+    {
+      "id": "qa-08",
+      "expected": "직장인",
+      "predicted": "직장인",
+      "confidence": 0.95,
+      "latencyMs": 5009.282300000006,
+      "difficulty": "easy"
+    },
+    {
+      "id": "qa-09",
+      "expected": "프리랜서",
+      "predicted": "프리랜서",
+      "confidence": 0.9,
+      "latencyMs": 4984.676800000001,
+      "difficulty": "easy"
+    },
+    {
+      "id": "qa-10",
+      "expected": "팀 사용자",
+      "predicted": "팀 사용자",
+      "confidence": 0.9,
+      "latencyMs": 6040.775399999999,
+      "difficulty": "easy"
+    },
+    {
+      "id": "qa-11",
+      "expected": "unknown",
+      "predicted": "unknown",
+      "confidence": 0.9,
+      "latencyMs": 4196.800499999998,
+      "difficulty": "easy"
+    },
+    {
+      "id": "qa-12",
+      "expected": "unknown",
+      "predicted": "대학생",
+      "confidence": 0.9,
+      "latencyMs": 4757.129399999998,
+      "difficulty": "easy"
+    }
+  ]
+}
