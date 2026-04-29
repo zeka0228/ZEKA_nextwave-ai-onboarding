@@ -26,13 +26,37 @@ export function DashboardScreen() {
             <h1>이번 주 데이터</h1>
             <p className="dashboard-period">{state.dashboard.weekRangeLabel}</p>
           </div>
-          <button
-            className="primary-button"
-            type="button"
-            onClick={actions.openCreateModal}
-          >
-            새로 만들기
-          </button>
+          <div className="dashboard-header-actions">
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    '모든 데이터를 초기화합니다.\n' +
+                      '\n' +
+                      '· 작성된 메모 / 일정\n' +
+                      '· 분류 이력 / 추천 카드\n' +
+                      '· 완료된 활동 / 대시보드 지표\n' +
+                      '· "나중에 하기" / "다시 보지 않기" 기록\n' +
+                      '\n' +
+                      '계속할까요?',
+                  )
+                ) {
+                  actions.resetState();
+                }
+              }}
+            >
+              초기화
+            </button>
+            <button
+              className="primary-button"
+              type="button"
+              onClick={actions.openCreateModal}
+            >
+              새로 만들기
+            </button>
+          </div>
         </header>
 
         <RecommendationCard />

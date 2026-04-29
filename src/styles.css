@@ -47,6 +47,12 @@ ul {
   gap: 16px;
 }
 
+.dashboard-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .dashboard-header h1 {
   margin: 0;
   font-size: 30px;
@@ -420,6 +426,30 @@ ul {
 .stat-delta-down { color: #c0392b; }
 
 /* ---------- Activity & Drive lists ---------- */
+
+.content-subsection {
+  margin-top: 16px;
+}
+
+.content-subsection:first-of-type {
+  margin-top: 8px;
+}
+
+.content-subsection h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #546179;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.content-empty {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 13px;
+  color: #8593ae;
+}
 
 .activity-list,
 .drive-list {
