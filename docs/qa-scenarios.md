@@ -103,7 +103,7 @@
 
 - **Then**: 정확도 ≥ 80%
 
-> **현행 측정 결과 (2026-04-29, gemma4:e4b)**: 정확도 100% (12/12), Macro-F1 1.000, latency mean 512ms / p95 793ms — 합격 기준 큰 마진 통과. 동일 평가셋이 `src/services/classifiers/__eval__/testset.ts` `qaScenarioCases` 에 fixture 화되어 있으며 `npm run eval:classifier -- --qa` 로 자동 측정. 진단 과정·전체 33건 회귀 결과는 `notes/classifier-eval.md` (.gitignore), 누적 변경 요약은 `implementation-extensions.md` §10 참조.
+> **현행 측정 결과 (2026-04-29, gemma4:e4b)**: 정확도 100% (12/12), Macro-F1 1.000, latency mean 512ms / p95 773ms — 합격 기준 큰 마진 통과. 동일 평가셋이 `src/services/classifiers/__eval__/testset.ts` `qaScenarioCases` 에 fixture 화되어 있으며 `npm run eval:classifier -- --qa` 로 자동 측정. 진단 과정·전체 152건 회귀 결과·약점 카테고리 분석은 `classifier-evaluation.md`, 누적 변경 요약은 `implementation-extensions.md` §10 참조.
 
 ---
 

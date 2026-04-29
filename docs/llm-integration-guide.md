@@ -4,9 +4,26 @@
 
 > **✅ 본 가이드의 Step 1~5 는 모두 적용 완료 (2026-04-29).**
 > 현재 default 분류기는 Ollama `gemma4:e4b` (LLM_BASE_URL `/api/llm`, native `/api/chat`, `think:false`).
-> 측정값: QA §C-3 12건 100% / 전체 33건 100%, Macro-F1 1.000, latency p95 510ms.
+> 측정값: QA §C-3 12건 100% / 전체 152건 98.7%, Macro-F1 0.986, latency p95 524ms.
 > 본 문서는 (a) 완료된 작업의 회고 (b) 모델/프로바이더 교체 시 참조 가이드 (c) 운영 점검 체크리스트로 사용한다.
-> 적용 결과 변경 사항 상세는 `implementation-extensions.md` §10, 측정 진단 과정은 `notes/classifier-eval.md` (.gitignore) 참조.
+> 적용 결과 변경 사항 상세는 `implementation-extensions.md` §10, 측정 진단 과정은 `classifier-evaluation.md` 참조.
+
+## 운영 전략 요약 — Local LLM → Serverless API
+
+본 프로젝트의 LLM 인프라 전략은 **단계별 전환** 모델:
+
+| 단계 | 환경 | 인프라 | 월 비용 |
+|---|---|---|---|
+| **개발 / 테스트 / 데모** | localhost dev | **로컬 Ollama `gemma4:e4b`** (현재 default) | ~$22 (전기) |
+| **베타 (DAU 100~500)** | 소규모 운영 | 동일 + peak 시 Groq fallback | ~$32 |
+| **본격 운영 (DAU 500+)** | production | **Groq serverless `gemma2-9b-it`** | $26~$5,238 (DAU 비례) |
+| **거대 스케일 (DAU 50,000+)** | enterprise | 검토: dedicated GPU 클러스터 vs 계속 Groq | $2,800+ |
+
+**근거 한 줄**: 여러 로컬 모델 후보 검토 + dedicated 클라우드 GPU 비용 비교 결과, **API serverless 가 거의 모든 시나리오에서 더 효율적**임이 확인됨. 따라서 dev/test 는 추가 투자 없이 기 설치 모델 그대로 유지하고, 운영 진입과 동시에 Groq 로 전환.
+
+상세 결정 과정·측정 데이터·손익분기는 `scaling-and-cost-analysis.md` §0 (요약) / §3~§8 (전체 분석) 참조.
+
+→ 이 가이드의 Step 1~5 는 **dev/test 단계의 셋업 절차**. 운영 진입 시 Groq 로 swap 은 어댑터의 endpoint/응답 schema 분기만 추가하면 됨 (§8-6 참조).
 
 ## 사전 점검 — 적용 결과
 
@@ -346,7 +363,7 @@ npm run eval:classifier -- --filter 직장인 --limit 5
 | QA §C-3 (12건) | 100.0% | 1.000 | 512ms / 793ms |
 | 전체 회귀 (33건) | 100.0% | 1.000 | 496ms / 510ms |
 
-상세 진단 과정·메트릭 정의·보강 후보는 `notes/classifier-eval.md` (.gitignore) 참조.
+상세 진단 과정·메트릭 정의·보강 후보는 `classifier-evaluation.md` 참조.
 
 ---
 
@@ -398,10 +415,15 @@ LLM 이 stream 으로 응답하면 "분석 중..." UX 가 더 자연스러워짐
 - 단, 최종 JSON 파싱은 stream 종료 후
 - 진행 표시는 별도 ui 상태 (`state.ui.streamProgress` 등) 추가 검토
 
-### 8-4. 비용 / rate limit
+### 8-4. 비용 / rate limit / 동시성 / 스케일링
 - 메모 작성마다 LLM 호출 → 비용 누적
 - 같은 입력 연속 호출 차단 (debounce / dedup cache)
 - 저비용 모델 선택 (분류는 대형 모델 불필요)
+- **로컬 Ollama 한계**: RTX 4070 Ti Super + gemma4:e4b 측정 시 throughput 천장 3.6 req/s (4 슬롯), DAU ~580 (peak 5x, p95 ≤ 2s 가정)
+- **DAU 600 이상**: serverless (Groq gemma2-9b $19.40/M req 또는 Llama 8B $5.36/M req) 가 dedicated GPU 보다 거의 항상 쌈. 손익분기 ~11,000 DAU
+- **모델 swap 주의**: 같은 프롬프트로 qwen2.5:3b 정확도 41.7%, qwen2.5:7b 75% 로 회귀. gemma 계열 의존 발견. 모델 교체 시 정확도 재측정 필수
+- **anti-pattern 확인**: 같은 GPU 에 2 인스턴스 띄우면 throughput -22% (compute 경합). 진짜 2x 는 별도 물리 GPU 필요
+- 운영 도구·동시성 측정 스크립트·클라우드 비용 분석 상세는 `scaling-and-cost-analysis.md` 참조
 
 ### 8-5. PII / 민감정보
 사용자가 메모에 개인정보를 포함할 수 있음.

@@ -460,7 +460,7 @@ function resolveUserType(params: {
 - 모호/사적 케이스는 `unknown` 또는 `개인 사용자 fallback`으로 처리되어야 한다.
 - 전체 정확도 목표는 80% 이상이다.
 
-> **현행 구현 주석**: Vitest 대신 standalone tsx 러너로 측정. `npm run eval:classifier -- --qa` 로 12 케이스, 인자 없이 33 케이스. 측정 결과·메트릭 정의는 `notes/classifier-eval.md` 참조 (notes/ 는 .gitignore). 최신 결과: QA §C-3 100% (12/12), 전체 33건 100% (33/33), Macro-F1 1.000.
+> **현행 구현 주석**: Vitest 대신 standalone tsx 러너로 측정. `npm run eval:classifier -- --qa` 로 12 케이스, 인자 없이 152 케이스. 측정 결과·메트릭 정의는 `classifier-evaluation.md` 참조. 최신 결과: QA §C-3 100% (12/12), 전체 152건 98.7% (150/152), Macro-F1 0.986.
 
 ## 5. 추천 로직
 

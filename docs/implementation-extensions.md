@@ -265,19 +265,23 @@
 - plan 원안 §4.2 / §4.5: `{user_type, confidence, reasoning, keywords}`
 - 실제 구현: LLM 출력은 `{user_type, confidence}` 만. adapter 가 `keywords: []`, `reasoning: undefined` 로 채워서 반환 (타입 호환 유지)
 - 이유: latency 1초 목표. 출력 토큰 60~70% 감소. UI 측 `RecommendationCard.reasoning` 은 fallback 텍스트로 자연 흡수, `AnalysisReasonPanel.keywords` 는 빈 배열을 받아 칩 영역만 비어 보임
-- 측정: 단독 적용 시 mean 5,399 → 1,306ms (-76%), p50 5,009 → 378ms (-92%) (`notes/classifier-eval.md` §6.2)
+- 측정: 단독 적용 시 mean 5,399 → 1,306ms (-76%), p50 5,009 → 378ms (-92%) (`classifier-evaluation.md` §5.2)
 - ⚠️ 향후 LLM 응답에서 keywords 를 다시 받고 싶다면 프롬프트 출력 정의 + parser 두 곳 동시 변경
 
 ### 10.2 프롬프트 후보 1+5 (변경 B)
 
 - 위치: `classificationPrompt.ts`
 - plan 원안 §4.5: 5 클래스 정의 한 줄씩 + "JSON 으로만 답변" 한 문장
-- 실제 구현: 다음 두 블록 추가
-  1. **unknown 트리거 4개 명시** — 사적 영역 / 빈 내용 또는 단일 행위 단어 / 두 클래스 단서 충돌 / 단정 불가
-  2. **클래스별 함정 키워드 negative criteria** — '회의·미팅·프로젝트' 단독 직장인 금지, '~학·~론' 단독 대학생 금지, '회의·리뷰' 단독 팀 사용자 금지 (협업 단서 함께 필요), '프로젝트' 단독 프리랜서 금지 (클라이언트/외주 단서 함께 필요)
-- 이유: baseline 측정에서 unknown 케이스 4건 중 3건 오답 (qa-05/06/12). 모델이 단일 단어 함정 ('회의' → 직장인, '경제학' → 대학생) 에 first-match 점프
+- 실제 구현: 검토된 5개 후보 (`prompt-engineering.md` §3) 중 **후보 1 + 후보 5** 채용. 다음 두 블록 추가:
+  1. **후보 1 — unknown 트리거 4개 명시 + 분류 강제 압력 제거** — 사적 영역 / 빈 내용 또는 단일 행위 단어 / 두 클래스 단서 충돌 / 단정 불가
+  2. **후보 5 — 클래스별 함정 키워드 negative criteria** — '회의·미팅·프로젝트' 단독 직장인 금지, '~학·~론' 단독 대학생 금지, '회의·리뷰' 단독 팀 사용자 금지 (협업 단서 함께 필요), '프로젝트' 단독 프리랜서 금지 (클라이언트/외주 단서 함께 필요)
+- 보류된 3개 후보 (적용 안 됨):
+  - **후보 2 (few-shot 예시)** — 평가셋 어휘 누수 위험, 일반화 저하 우려
+  - **후보 3 (confidence 캘리브레이션 가이드)** — 작은 모델 순응도 편차 큼, 단독 효과 약함
+  - **후보 4 (decision rule 단계화)** — 작은 모델이 절차 무시 / reasoning 단조로워질 위험
+- 이유 (후보 1·5 채택): baseline 측정에서 unknown 케이스 4건 중 3건 오답 (qa-05/06/12). 모델이 단일 단어 함정 ('회의' → 직장인, '경제학' → 대학생) 에 first-match 점프 → 진단의 5가지 구조적 문제 중 3개를 직격 + 토큰 증가 작음 (+10줄) + few-shot 누수 회피
 - 결과: A 단독 75% → A+B 91.7% (QA §C-3) — unknown 4/4 회복. 진단의 "프롬프트 문제" 가 정확
-- 보강 후보 (미적용): 팀 사용자 negative criteria 에 '~팀(개발팀/디자인팀)' 어휘 추가 — `notes/prompt-candidates.md` §4.5
+- 현행 프롬프트 전문 + 라인-후보 매핑 + 보류 후보 도입 트리거: `prompt-engineering.md` §5 참조
 
 ### 10.3 Ollama native API + think:false (변경 C)
 
@@ -287,7 +291,7 @@
 - BASE_URL 의미 변경: `http://localhost:11434/v1` → `http://localhost:11434` (host root)
 - vite proxy (`/api/llm` → `host:11434`) 는 그대로 유효
 - 이유: `gemma4:e4b` 가 thinking 모델임을 발견 (응답 본문에 `reasoning: "Thinking Process: ..."` ~300 토큰). OpenAI compat 엔드포인트는 `think:false` 를 무시함. native API 가 유일한 차단 경로
-- 측정: A+B 대비 mean 4,343 → 496ms (-89%), p95 6,128 → 510ms (-92%). 정확도도 97% → 100% 동시 상승 (over-reasoning 제거 부산물). 상세 `notes/classifier-eval.md` §6.7~6.10
+- 측정: A+B 대비 mean 4,343 → 496ms (-89%), p95 6,128 → 510ms (-92%). 정확도도 97% → 100% 동시 상승 (over-reasoning 제거 부산물). 상세 `classifier-evaluation.md` §5.4
 - ⚠️ 외부 LLM (OpenAI 등) 으로 swap 시 endpoint/응답 schema 가 달라 — 어댑터 두 갈래 분기 또는 별도 어댑터 구현 필요
 
 ### 10.4 LlmClassificationResult.keywords 의미 변경
@@ -307,7 +311,7 @@
 
 baseline (75% / mean 5.4s / p95 9.0s) 대비 정확도 +25%p, latency mean -91%, p95 -94%. plan §4.3 의 "정확도 80% 목표" + plan §4.7 의 "5초 timeout" 양쪽 다 큰 마진 통과.
 
-상세 측정 데이터·진단 과정·보강 후보는 `notes/classifier-eval.md` §6, `notes/prompt-candidates.md` §4 참조 (notes/ 는 .gitignore 처리).
+상세 측정 데이터·진단 과정·보강 후보는 `classifier-evaluation.md`, `prompt-engineering.md` 참조.
 
 ### 10.6 Step 5 결정 — mockClassifier 보존
 

@@ -43,7 +43,9 @@ memo creation
 - LLM classifier (Ollama `gemma4:e4b`, native `/api/chat` + `think:false`)
 - Mock classifier for offline dev — swap with `VITE_USE_MOCK_CLASSIFIER=true`
 
-LLM classifier measurements (gemma4:e4b): 100% accuracy on the QA §C-3 12-case set, 100% on the full 33-case regression, latency p95 510ms. Run `npm run eval:classifier` for automated measurement (details in `docs/llm-integration-guide.md`).
+LLM classifier measurements (gemma4:e4b): 100% accuracy on the QA §C-3 12-case set, 98.7% on the full 152-case regression, latency p95 524ms. Run `npm run eval:classifier` for automated measurement (details in `docs/classifier-evaluation.md`).
+
+**Model selection rationale**: Multiple local models (`qwen2.5:3b/7b`, `gemma2:9b`) were evaluated, but none met both accuracy and throughput requirements satisfactorily. Cost analysis confirmed that for production scale, serverless API (Groq) is more cost-efficient than self-hosted GPU. Therefore the dev/test environment continues to use the already-installed `gemma4:e4b` without further investment. See `docs/scaling-and-cost-analysis.md` §0 for the full decision.
 
 ## Demo Flow
 
@@ -68,9 +70,18 @@ An LLM-style classifier can interpret context without forcing users through long
 
 ## Documentation
 
+### Spec / Implementation
 - [Feature Specification v0.4 revised](docs/기능명세서_v0.4_revised.md)
 - [Implementation Plan](docs/implementation-plan.md)
 - [Implementation Extensions](docs/implementation-extensions.md)
 - [LLM Integration Guide](docs/llm-integration-guide.md)
+
+### LLM Classifier — Measurements / Decisions
+- [Classifier Evaluation](docs/classifier-evaluation.md) — test set, metrics, measurement history
+- [Prompt Engineering](docs/prompt-engineering.md) — prompt design rationale
+- [Scaling & Cost Analysis](docs/scaling-and-cost-analysis.md) — concurrency, DAU limits, cloud comparison
+- [LLM Features Roadmap](docs/llm-features-roadmap.md) — future LLM ideas registry
+
+### QA / Design
 - [QA Scenarios](docs/qa-scenarios.md) / [Current Build QA](docs/qa-scenarios-current.md)
 - [Wireframe](docs/와이어프레임.png)
