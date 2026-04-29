@@ -431,6 +431,26 @@ LLM 이 stream 으로 응답하면 "분석 중..." UX 가 더 자연스러워짐
 - 자체 호스팅 (Gemma / Ollama) 검토
 - 또는 입력 필터링 / 마스킹 전처리
 
+### 8-5b. Cold start 대응 (로컬 Ollama 환경) ✅ 적용 완료
+
+로컬 Ollama 는 default `keep_alive` 5분 후 모델을 GPU 메모리에서 unload. 첫 호출 시 disk → VRAM 재적재로 **5~7초 cold start** 발생. 두 가지 방법으로 대응:
+
+**(A) `keep_alive: 30m` 적용** — `llmClassifierAdapter.ts` body 에 명시. 30분 idle 후에도 unload 안 됨. 환경변수 `VITE_LLM_KEEP_ALIVE` 로 override 가능 (`'30m'` / `'1h'` / `'-1'` 무제한 등).
+
+**(B) 첫 마운트 시 prewarm** — `AppStateProvider.tsx` 의 useEffect 에서 `warmupClassifier()` 호출. 사용자가 첫 메모 작성하기 전에 모델이 이미 메모리에 적재됨. mock classifier 사용 중이거나 Ollama 미가동 시 silent fail.
+
+| 시나리오 | A 만 | B 만 | **A + B (적용)** |
+|---|---|---|---|
+| 앱 첫 시작 | cold start 발생 | warmup 으로 흡수 (백그라운드 5~7s) | warmup 으로 흡수 ✓ |
+| dev 작업 중 idle 30분+ | cold start 발생 | 영향 없음 | warmup 으로 다시 흡수 (정확히는 A 의 30m 한도 내) ✓ |
+| 30m 이상 진짜 장시간 idle | cold start 발생 | 영향 없음 | A 만료 후 B 도 이미 끝남 → cold start 발생 |
+
+→ **30분 한도 내 모든 시나리오 cover**. 더 길게 보장 필요하면 `VITE_LLM_KEEP_ALIVE='-1'` (무제한) 또는 `1h+` 로 override.
+
+**VRAM trade-off**: keep_alive 동안 GPU ~10GB 점유. 동시에 게임/렌더링 등 다른 GPU 작업 시 부담. 끝내려면 `ollama stop gemma4:e4b`.
+
+**Groq / 외부 API 환경**: Groq 같은 serverless 는 **multi-tenant 로 모델 항상 hot** 상태 — cold start 개념 자체가 없음. 첫 호출도 ~300~600ms (네트워크 RTT + handshake), 이후 ~200~350ms. `keep_alive` 옵션은 무시됨. A+B 코드는 운영 swap 시 자동으로 무해 (네트워크 호출 1번 추가될 뿐).
+
 ### 8-6. Thinking 모델 주의사항 ⚠️ 적용 후 발견
 
 `gemma4:e4b` 같은 **thinking 모델**은 모델 내부적으로 reasoning trace 를 먼저 생성한 뒤 최종 답을 출력. trace 가 응답에 포함되어 latency 가 4~7초로 튐.

@@ -319,6 +319,18 @@ baseline (75% / mean 5.4s / p95 9.0s) 대비 정확도 +25%p, latency mean -91%,
 - 실제 구현: 보존 + `VITE_USE_MOCK_CLASSIFIER=true` 환경변수로 swap (`classifyContent.ts`)
 - 이유: 오프라인 dev / Ollama 미가동 환경에서 UI 흐름 검증 가능. 비용 zero
 
+### 10.7 Cold start 대응 — keep_alive + prewarm
+
+- plan 원안: 명시 없음 (LLM 어댑터 기본 호출만)
+- 발견 동기: Ollama default `keep_alive` 5분 후 모델 unload → 첫 호출 5~7초 cold start 체감
+- 실제 구현: 두 가지 방법 결합
+  - **A. `keep_alive: '30m'`** — adapter body 에 명시. `VITE_LLM_KEEP_ALIVE` env 로 override (`'30m'` / `'1h'` / `'-1'`)
+  - **B. 첫 마운트 prewarm** — `AppStateProvider` useEffect 에서 `warmupClassifier()` 호출. dummy classify 로 모델을 GPU 메모리에 미리 적재
+- 변경 파일: `llmClassifierAdapter.ts` (keep_alive body + warmupClassifier export), `scripts/evalClassifier.ts` (eval 중 unload 방지), `AppStateProvider.tsx` (mount useEffect), `.env.example`
+- skip 조건: `VITE_USE_MOCK_CLASSIFIER=true` 면 prewarm skip (mock 은 cold start 없음)
+- 외부 API swap 시: Groq 같은 serverless 는 multi-tenant 로 항상 hot — `keep_alive` 무시됨. prewarm 호출은 무해 (네트워크 1회 ~300ms)
+- 상세 시나리오 표는 `llm-integration-guide.md` §8-5b 참조
+
 ---
 
 ## 메모

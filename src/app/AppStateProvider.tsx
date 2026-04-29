@@ -25,6 +25,7 @@ import {
 } from '../services/storage';
 import { appReducer, createInitialAppState } from './appReducer';
 import { runClassificationFlow } from '../services/classifiers/classificationFlow';
+import { warmupClassifier } from '../services/classifiers/llmClassifierAdapter';
 
 export interface ContentDraft {
   type: ContentType;
@@ -87,6 +88,14 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  // 첫 마운트 시 LLM 모델을 GPU 메모리에 미리 적재 → 첫 사용자 액션의 cold start 회피.
+  // mock classifier 사용 중이거나 Ollama 미가동 시 silent fail (warmupClassifier 내부 처리).
+  useEffect(() => {
+    const env = import.meta.env as Record<string, string | undefined>;
+    if (env.VITE_USE_MOCK_CLASSIFIER === 'true') return;
+    void warmupClassifier();
+  }, []);
 
   useEffect(() => {
     // sessionDismissedGuides 는 영속 제외 (plan §5.3: 세션 내 dismiss)

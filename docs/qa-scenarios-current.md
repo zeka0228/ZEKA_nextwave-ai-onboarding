@@ -55,7 +55,8 @@ LLM 분류 자동화 (`qa-scenarios.md` §C-3, §H 의 timeout/JSON 실패/unkno
 - **Then**:
   - 모달이 닫힘
   - `RecommendationCard` 가 분석 상태로 전환 (분석 중 카피 노출)
-  - LLM (`gemma4:e4b`) 응답 후 (~500ms, cold start 시 ~1s) 분류 결과 + 추천 카드로 전환
+  - LLM (`gemma4:e4b`) 응답 후 ~500ms 안에 분류 결과 + 추천 카드로 전환
+- **비고**: 앱 첫 마운트 시 `warmupClassifier` 가 백그라운드로 모델을 미리 적재하므로 첫 사용자 액션도 cold start 없이 ~500ms 안에 완료됨. 단, 앱 진입 후 5초 이내에 즉시 메모 작성하면 warmup 과 race 가능 (이때만 cold start 5~7s 노출)
 
 ### A-3. 일정 탭 작성
 

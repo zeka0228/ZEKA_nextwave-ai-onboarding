@@ -12,6 +12,9 @@ const env = import.meta.env as Record<string, string | undefined>;
 const BASE_URL = env.VITE_LLM_BASE_URL ?? '/api/llm';
 const MODEL = env.VITE_LLM_MODEL ?? 'qwen2.5:3b';
 const API_KEY = env.VITE_LLM_API_KEY ?? 'ollama';
+// idle 상태에서도 모델을 GPU 메모리에 유지. cold start (~5~7s) 회피.
+// 운영 환경 (Groq 등) 으로 swap 시 무시됨 (Ollama 한정 옵션).
+const KEEP_ALIVE = env.VITE_LLM_KEEP_ALIVE ?? '30m';
 
 // plan §4.7 명세는 5초이지만 로컬 LLM cold start 흡수 위해 env 로 override 가능.
 const parsedTimeout = Number(env.VITE_LLM_TIMEOUT_MS);
@@ -49,6 +52,7 @@ export const llmClassifierAdapter: ClassifierAdapter = {
           stream: false,
           think: false,
           format: 'json',
+          keep_alive: KEEP_ALIVE,
           options: { temperature: 0 },
           messages: [
             {
@@ -87,6 +91,23 @@ export const llmClassifierAdapter: ClassifierAdapter = {
     }
   },
 };
+
+/**
+ * 모델을 GPU 메모리에 미리 적재해 첫 사용자 액션의 cold start 를 회피.
+ * 앱 첫 마운트 시 1회 호출. mock classifier 사용 중이거나 Ollama 미가동 시 silent fail.
+ */
+export async function warmupClassifier(): Promise<void> {
+  try {
+    await llmClassifierAdapter.classify({
+      type: 'memo',
+      title: 'warmup',
+      content: 'init',
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('[warmupClassifier] failed (will retry on first user action):', msg);
+  }
+}
 
 function parseLlmResponse(raw: unknown): LlmClassificationResult {
   if (!raw || typeof raw !== 'object') {

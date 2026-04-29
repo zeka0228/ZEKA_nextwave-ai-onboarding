@@ -38,6 +38,7 @@ const BASE_URL = process.env.LLM_BASE_URL ?? 'http://localhost:11434';
 const MODEL = process.env.LLM_MODEL ?? 'qwen2.5:3b';
 const API_KEY = process.env.LLM_API_KEY ?? 'ollama';
 const TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS) || 30_000;
+const KEEP_ALIVE = process.env.LLM_KEEP_ALIVE ?? '30m';
 
 interface CliArgs {
   filter?: string;
@@ -83,6 +84,7 @@ async function callLlm(prompt: string): Promise<{
         stream: false,
         think: false,
         format: 'json',
+        keep_alive: KEEP_ALIVE,
         options: { temperature: 0 },
         messages: [
           {
