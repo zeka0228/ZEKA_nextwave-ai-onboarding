@@ -40,17 +40,17 @@ Impact: 수동적인 대시보드를 사용자의 다음 행동을 유도하는 
 
 - React + TypeScript
 - Local state + `localStorage`
-- MVP용 mock classifier
-- 실제 LLM/Gemma 연동을 위한 classifier adapter 구조
+- LLM 분류기 (Ollama `gemma4:e4b`, native `/api/chat` + `think:false`)
+- 오프라인 dev 용 mock classifier — `VITE_USE_MOCK_CLASSIFIER=true` 로 swap
 
-MVP에서는 전체 제품 흐름을 빠르게 검증하기 위해 mock classifier를 먼저 사용합니다. 이후 동일한 `classifyContent` 인터페이스 뒤에 실제 LLM 또는 Gemma classifier를 연결할 수 있습니다.
+LLM 분류기 측정값 (gemma4:e4b 기준): QA §C-3 12 케이스 100% 정답, 전체 33 케이스 회귀 100% 정답, latency p95 510ms. `npm run eval:classifier` 로 자동 측정 (상세는 `docs/llm-integration-guide.md`).
 
 ## 데모 흐름
 
 1. 사용자가 대시보드에 진입합니다.
 2. `ContentCreateModal`에서 메모나 일정을 작성합니다.
-3. mock classifier가 입력 내용을 분석합니다.
-4. 시스템이 `user_type`, 신뢰도, 판단 근거를 결정합니다.
+3. LLM 분류기가 입력 내용을 분석합니다 (~500ms).
+4. 시스템이 `user_type`, 신뢰도를 결정합니다.
 5. 대시보드에 `RecommendationCard`가 표시됩니다.
 6. 사용자가 CTA를 수락합니다.
 7. mock 기능 사용 이력이 기록됩니다.
@@ -64,10 +64,13 @@ MVP에서는 전체 제품 흐름을 빠르게 검증하기 위해 mock classifi
 
 예를 들어 "프로젝트"라는 단어는 학교 과제, 클라이언트 납품, 회사 업무, 팀 스프린트 모두를 의미할 수 있습니다.
 
-LLM 방식의 분류기는 긴 설정 폼 없이도 문맥을 해석할 수 있습니다. 이 프로젝트는 MVP 속도를 위해 mock classifier로 시작하지만, 실제 LLM 연동이 가능하도록 adapter 구조를 유지합니다.
+LLM 방식의 분류기는 긴 설정 폼 없이도 문맥을 해석할 수 있습니다. 본 프로젝트는 동일한 `ClassifierAdapter` 인터페이스 뒤에 LLM 어댑터와 mock 어댑터를 모두 두어, 프로바이더 교체 / 오프라인 dev / 자동 회귀 측정을 모두 지원합니다.
 
 ## 문서
 
 - [기능 명세서 v0.4 revised](docs/기능명세서_v0.4_revised.md)
 - [구현 계획서](docs/implementation-plan.md)
+- [구현 변경/추가 사항](docs/implementation-extensions.md)
+- [LLM 연동 가이드](docs/llm-integration-guide.md)
+- [QA 시나리오](docs/qa-scenarios.md) / [현행 빌드 QA](docs/qa-scenarios-current.md)
 - [와이어프레임](docs/와이어프레임.png)

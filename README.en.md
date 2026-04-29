@@ -40,17 +40,17 @@ memo creation
 
 - React + TypeScript
 - Local state + `localStorage`
-- Mock classifier for MVP speed
-- Classifier adapter structure for future LLM/Gemma integration
+- LLM classifier (Ollama `gemma4:e4b`, native `/api/chat` + `think:false`)
+- Mock classifier for offline dev — swap with `VITE_USE_MOCK_CLASSIFIER=true`
 
-The MVP starts with a mock classifier to validate the full product flow quickly. A real LLM or Gemma classifier can later be connected behind the same `classifyContent` interface.
+LLM classifier measurements (gemma4:e4b): 100% accuracy on the QA §C-3 12-case set, 100% on the full 33-case regression, latency p95 510ms. Run `npm run eval:classifier` for automated measurement (details in `docs/llm-integration-guide.md`).
 
 ## Demo Flow
 
 1. The user opens the dashboard.
 2. The user creates a memo or schedule in `ContentCreateModal`.
-3. The mock classifier analyzes the input.
-4. The system resolves `user_type`, confidence, and reasoning.
+3. The LLM classifier analyzes the input (~500ms).
+4. The system resolves `user_type` and confidence.
 5. `RecommendationCard` appears on the dashboard.
 6. The user accepts the CTA.
 7. Mock feature usage is recorded.
@@ -64,10 +64,13 @@ Rule-based onboarding is not enough because user intent is expressed in free-for
 
 For example, "project" can mean a school assignment, client delivery, internal company task, or team sprint depending on context.
 
-An LLM-style classifier can interpret context without forcing users through long setup forms. This project starts with a mock classifier for MVP speed while keeping the architecture ready for real LLM integration.
+An LLM-style classifier can interpret context without forcing users through long setup forms. The project keeps both an LLM adapter and a mock adapter behind the same `ClassifierAdapter` interface, supporting provider swaps, offline dev, and automated regression measurement.
 
 ## Documentation
 
 - [Feature Specification v0.4 revised](docs/기능명세서_v0.4_revised.md)
 - [Implementation Plan](docs/implementation-plan.md)
+- [Implementation Extensions](docs/implementation-extensions.md)
+- [LLM Integration Guide](docs/llm-integration-guide.md)
+- [QA Scenarios](docs/qa-scenarios.md) / [Current Build QA](docs/qa-scenarios-current.md)
 - [Wireframe](docs/와이어프레임.png)

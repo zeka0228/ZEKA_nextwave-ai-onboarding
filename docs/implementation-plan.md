@@ -344,6 +344,9 @@ export async function classifyContent(
 }
 ```
 
+> **현행 구현 주석 (2026-04-29)**
+> LLM 응답 schema 는 latency 를 잡기 위해 `{user_type, confidence}` 두 필드만 받도록 축소됨. `reasoning` / `keywords` 는 adapter 가 빈 값으로 채워 호출자에게 같은 인터페이스를 제공한다. 변경 배경/측정값은 `implementation-extensions.md` §10.1 참조.
+
 ### 4.3 임계값
 
 초기값은 `θ = 0.75`로 둔다. 명세서의 테스트셋 12개를 기준으로 정확도 80% 이상을 만족하도록 조정한다.
@@ -351,6 +354,8 @@ export async function classifyContent(
 - `confidence >= θ`이고 `user_type !== 'unknown'`이면 LLM 결과 채택
 - `confidence < θ`이면 사용 이력 fallback
 - JSON 파싱 실패, 타임아웃, API 오류, 허용되지 않은 user_type도 fallback 처리
+
+> **현행 구현 주석**: 임계값 0.75 그대로 유지. `gemma4:e4b` + 적용된 프롬프트 조합에서 QA §C-3 12건·전체 33건 모두 100% 통과 (`implementation-extensions.md` §10.5).
 
 ### 4.4 mock classifier 규칙
 
@@ -396,6 +401,8 @@ JSON으로만 답변하세요.
   "keywords": ["감지 키워드"]
 }
 ```
+
+> **현행 구현 주석**: 위 초안에 두 블록이 추가되어 있음 — (1) unknown 트리거 4개 명시 (사적 영역 / 빈 내용 / 단서 충돌 / 단정 불가), (2) 클래스별 함정 키워드 negative criteria. 출력 schema 도 `{user_type, confidence}` 두 필드로 축소. 실제 사용 중인 프롬프트는 `src/domain/classification/classificationPrompt.ts`, 변경 배경은 `implementation-extensions.md` §10.1·§10.2 참조.
 
 ### 4.6 fallback 알고리즘
 
@@ -443,6 +450,8 @@ function resolveUserType(params: {
 - 5초 초과 시 `llmResult = null`로 간주하고 fallback을 실행한다.
 - UI에는 "AI 분석이 지연되어 기본 추천을 준비했습니다." 정도의 짧은 안내만 표시한다.
 
+> **현행 구현 주석**: timeout 정책 그대로. `gemma4:e4b` 측정에서 전체 33건 latency p95 510ms / max 744ms — 5초 budget 의 ~10% 사용. cold start 흡수를 위해 `.env` 의 `VITE_LLM_TIMEOUT_MS` 는 dev 환경 기본 30s 로 override. native API + `think:false` 의 효과는 `implementation-extensions.md` §10.3 참조.
+
 ### 4.8 테스트 기준
 
 명세서 §4.5의 12개 테스트셋을 `classification.test.ts`로 작성한다.
@@ -450,6 +459,8 @@ function resolveUserType(params: {
 - 쉬움 케이스는 기대 user_type과 일치해야 한다.
 - 모호/사적 케이스는 `unknown` 또는 `개인 사용자 fallback`으로 처리되어야 한다.
 - 전체 정확도 목표는 80% 이상이다.
+
+> **현행 구현 주석**: Vitest 대신 standalone tsx 러너로 측정. `npm run eval:classifier -- --qa` 로 12 케이스, 인자 없이 33 케이스. 측정 결과·메트릭 정의는 `notes/classifier-eval.md` 참조 (notes/ 는 .gitignore). 최신 결과: QA §C-3 100% (12/12), 전체 33건 100% (33/33), Macro-F1 1.000.
 
 ## 5. 추천 로직
 

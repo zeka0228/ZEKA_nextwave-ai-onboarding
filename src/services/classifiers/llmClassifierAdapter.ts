@@ -7,7 +7,9 @@ import type {
 import type { ClassifierAdapter } from './classifyContent';
 
 const env = import.meta.env as Record<string, string | undefined>;
-const BASE_URL = env.VITE_LLM_BASE_URL ?? '/api/llm/v1';
+// Ollama host root. native /api/chat 으로 호출하기 위해 v1 prefix 제거.
+// thinking 모델 (gemma3 시리즈 등) 의 reasoning trace 차단에는 native API 의 think:false 가 필요.
+const BASE_URL = env.VITE_LLM_BASE_URL ?? '/api/llm';
 const MODEL = env.VITE_LLM_MODEL ?? 'qwen2.5:3b';
 const API_KEY = env.VITE_LLM_API_KEY ?? 'ollama';
 
@@ -24,8 +26,8 @@ const ALLOWED_USER_TYPES: LlmUserType[] = [
   'unknown',
 ];
 
-interface OpenAIChatCompletion {
-  choices?: Array<{ message?: { content?: string } }>;
+interface OllamaChatResponse {
+  message?: { content?: string };
 }
 
 export const llmClassifierAdapter: ClassifierAdapter = {
@@ -36,7 +38,7 @@ export const llmClassifierAdapter: ClassifierAdapter = {
     const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
 
     try {
-      const response = await fetch(`${BASE_URL}/chat/completions`, {
+      const response = await fetch(`${BASE_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -44,6 +46,10 @@ export const llmClassifierAdapter: ClassifierAdapter = {
         },
         body: JSON.stringify({
           model: MODEL,
+          stream: false,
+          think: false,
+          format: 'json',
+          options: { temperature: 0 },
           messages: [
             {
               role: 'system',
@@ -52,8 +58,6 @@ export const llmClassifierAdapter: ClassifierAdapter = {
             },
             { role: 'user', content: prompt },
           ],
-          response_format: { type: 'json_object' },
-          temperature: 0,
         }),
         signal: controller.signal,
       });
@@ -63,8 +67,8 @@ export const llmClassifierAdapter: ClassifierAdapter = {
         throw new Error(`LLM API ${response.status}: ${body.slice(0, 200)}`);
       }
 
-      const completion = (await response.json()) as OpenAIChatCompletion;
-      const content = completion.choices?.[0]?.message?.content;
+      const completion = (await response.json()) as OllamaChatResponse;
+      const content = completion.message?.content;
       if (typeof content !== 'string' || content.length === 0) {
         throw new Error('LLM response missing content');
       }
@@ -92,8 +96,6 @@ function parseLlmResponse(raw: unknown): LlmClassificationResult {
 
   const userType = obj.user_type;
   const confidence = obj.confidence;
-  const keywords = obj.keywords;
-  const reasoning = obj.reasoning;
 
   if (
     typeof userType !== 'string' ||
@@ -109,17 +111,10 @@ function parseLlmResponse(raw: unknown): LlmClassificationResult {
   ) {
     throw new Error(`invalid confidence: ${String(confidence)}`);
   }
-  if (
-    !Array.isArray(keywords) ||
-    !keywords.every((k) => typeof k === 'string')
-  ) {
-    throw new Error('invalid keywords');
-  }
 
   return {
     user_type: userType as LlmUserType,
     confidence,
-    keywords,
-    reasoning: typeof reasoning === 'string' ? reasoning : undefined,
+    keywords: [],
   };
 }

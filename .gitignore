@@ -149,4 +149,4 @@ notes/
 .claude/
 
 # 분류기 평가 결과 산출물
-eval-result*.json
+eval-*.json

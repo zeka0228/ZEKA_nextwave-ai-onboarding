@@ -8,7 +8,7 @@
  *   npx tsx scripts/evalClassifier.ts --out eval-result.json
  *
  * 환경변수 (모두 선택):
- *   LLM_BASE_URL    default 'http://localhost:11434/v1'
+ *   LLM_BASE_URL    default 'http://localhost:11434' (Ollama host root, native /api/chat)
  *   LLM_MODEL       default 'qwen2.5:3b'
  *   LLM_API_KEY     default 'ollama'
  *   LLM_TIMEOUT_MS  default 30000
@@ -34,7 +34,7 @@ import {
   type CaseResult,
 } from '../src/services/classifiers/__eval__/metrics';
 
-const BASE_URL = process.env.LLM_BASE_URL ?? 'http://localhost:11434/v1';
+const BASE_URL = process.env.LLM_BASE_URL ?? 'http://localhost:11434';
 const MODEL = process.env.LLM_MODEL ?? 'qwen2.5:3b';
 const API_KEY = process.env.LLM_API_KEY ?? 'ollama';
 const TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS) || 30_000;
@@ -60,8 +60,8 @@ function parseArgs(argv: string[]): CliArgs {
 
 const QA_PASS_THRESHOLD = 0.8;
 
-interface OpenAIChatCompletion {
-  choices?: Array<{ message?: { content?: string } }>;
+interface OllamaChatResponse {
+  message?: { content?: string };
 }
 
 async function callLlm(prompt: string): Promise<{
@@ -72,7 +72,7 @@ async function callLlm(prompt: string): Promise<{
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const res = await fetch(`${BASE_URL}/chat/completions`, {
+    const res = await fetch(`${BASE_URL}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -80,6 +80,10 @@ async function callLlm(prompt: string): Promise<{
       },
       body: JSON.stringify({
         model: MODEL,
+        stream: false,
+        think: false,
+        format: 'json',
+        options: { temperature: 0 },
         messages: [
           {
             role: 'system',
@@ -88,8 +92,6 @@ async function callLlm(prompt: string): Promise<{
           },
           { role: 'user', content: prompt },
         ],
-        response_format: { type: 'json_object' },
-        temperature: 0,
       }),
       signal: controller.signal,
     });
@@ -99,8 +101,8 @@ async function callLlm(prompt: string): Promise<{
       throw new Error(`LLM API ${res.status}: ${body.slice(0, 200)}`);
     }
 
-    const completion = (await res.json()) as OpenAIChatCompletion;
-    const content = completion.choices?.[0]?.message?.content;
+    const completion = (await res.json()) as OllamaChatResponse;
+    const content = completion.message?.content;
     if (typeof content !== 'string' || content.length === 0) {
       throw new Error('LLM response missing content');
     }

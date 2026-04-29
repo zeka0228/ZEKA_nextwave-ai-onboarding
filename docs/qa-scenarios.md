@@ -103,6 +103,8 @@
 
 - **Then**: 정확도 ≥ 80%
 
+> **현행 측정 결과 (2026-04-29, gemma4:e4b)**: 정확도 100% (12/12), Macro-F1 1.000, latency mean 512ms / p95 793ms — 합격 기준 큰 마진 통과. 동일 평가셋이 `src/services/classifiers/__eval__/testset.ts` `qaScenarioCases` 에 fixture 화되어 있으며 `npm run eval:classifier -- --qa` 로 자동 측정. 진단 과정·전체 33건 회귀 결과는 `notes/classifier-eval.md` (.gitignore), 누적 변경 요약은 `implementation-extensions.md` §10 참조.
+
 ---
 
 ## D. 추천 카드 표시 (§5.1-5.2, §11-4)
@@ -289,3 +291,4 @@
 | 일자 | 변경 사항 |
 |---|---|
 | 2026-04-28 | 초안 작성. 기능명세서 v0.4-revised + implementation-plan §11 기준 |
+| 2026-04-29 | C-3 에 LLM 분류기 측정 결과 기록 (100% / Macro-F1 1.000 / latency p95 793ms) |
