@@ -4,6 +4,7 @@ import { ContentList } from '../components/content/ContentList';
 import { ProjectDriveMock } from '../components/dashboard/ProjectDriveMock';
 import { StatsPanel } from '../components/dashboard/StatsPanel';
 import { RecommendationCard } from '../components/guide/RecommendationCard';
+import { ToastHost } from '../components/ui/Toast';
 
 const legendItems = [
   { id: 'time', label: '총 투입 시간' },
@@ -82,6 +83,7 @@ export function DashboardScreen() {
       </main>
 
       {state.ui.isCreateModalOpen && <ContentCreateModal />}
+      <ToastHost />
     </>
   );
 }

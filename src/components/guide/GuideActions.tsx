@@ -1,4 +1,5 @@
 import { useAppState } from '../../app/AppStateProvider';
+import { showToast } from '../ui/toastBus';
 
 interface GuideActionsProps {
   cta: string;
@@ -13,6 +14,7 @@ export function GuideActions({ cta }: GuideActionsProps) {
         className="primary-button"
         type="button"
         onClick={() => {
+          showToast(`${cta} 시도! 실 구현 시 해당 내용으로 이동합니다.`);
           void actions.acceptCta();
         }}
       >
