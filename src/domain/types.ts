@@ -50,6 +50,7 @@ export interface Classification {
   reasoning?: string;
   keywords: string[];
   source: 'mock_classifier' | 'llm_adapter' | 'history_fallback' | 'default_fallback';
+  fallbackReason?: string;
   createdAt: number;
 }
 

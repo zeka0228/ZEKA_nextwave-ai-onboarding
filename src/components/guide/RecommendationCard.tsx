@@ -83,6 +83,53 @@ export function RecommendationCard() {
         confidence={classification.confidence}
       />
 
+      {classification.source === 'history_fallback' && (
+        <div className="fallback-trace fallback-trace-success" role="alert">
+          <span className="trace-step trace-step-fail">
+            <span className="trace-step-tag">실패</span>
+            <span className="trace-step-text">
+              LLM 분류 실패
+              {classification.fallbackReason
+                ? ` (${classification.fallbackReason})`
+                : ''}
+            </span>
+          </span>
+          <span className="trace-arrow" aria-hidden>
+            →
+          </span>
+          <span className="trace-step trace-step-success">
+            <span className="trace-step-tag">성공</span>
+            <span className="trace-step-text">사용기록 조회로 대체</span>
+          </span>
+        </div>
+      )}
+
+      {classification.source === 'default_fallback' && (
+        <div className="fallback-trace fallback-trace-fail" role="alert">
+          <span className="trace-step trace-step-fail">
+            <span className="trace-step-tag">실패</span>
+            <span className="trace-step-text">
+              LLM 분류 실패
+              {classification.fallbackReason
+                ? ` (${classification.fallbackReason.replace(
+                    / \+ 사용기록 부족$/,
+                    '',
+                  )})`
+                : ''}
+            </span>
+          </span>
+          <span className="trace-arrow" aria-hidden>
+            →
+          </span>
+          <span className="trace-step trace-step-fail">
+            <span className="trace-step-tag">실패</span>
+            <span className="trace-step-text">
+              사용기록 부족 → 디폴트 '개인 사용자'
+            </span>
+          </span>
+        </div>
+      )}
+
       <AnalysisReasonPanel
         keywords={classification.keywords}
         points={points}

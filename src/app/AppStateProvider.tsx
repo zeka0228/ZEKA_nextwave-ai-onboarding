@@ -150,6 +150,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
         reasoning: outcome.reasoning,
         keywords: outcome.keywords,
         source: outcome.source,
+        fallbackReason: outcome.fallbackReason,
         createdAt: Date.now(),
       };
 
