@@ -48,11 +48,33 @@ function modeWithLatestTieBreak(classifications: Classification[]): UserType {
   return bestType;
 }
 
+function deriveLlmFailureReason(
+  llmResult: LlmClassificationResult | null,
+): string {
+  if (!llmResult) return '어댑터 호출 실패 (timeout/parse error)';
+  if (llmResult.user_type === 'unknown') return 'LLM이 타입을 unknown으로 판단';
+  if (llmResult.confidence < CLASSIFICATION_THRESHOLD) {
+    const got = Math.round(llmResult.confidence * 100);
+    const need = Math.round(CLASSIFICATION_THRESHOLD * 100);
+    return `신뢰도 부족 (${got}% < ${need}%)`;
+  }
+  if (!isAllowedLlmUserType(llmResult.user_type)) {
+    return `허용되지 않은 타입 (${llmResult.user_type})`;
+  }
+  return '알 수 없음';
+}
+
+export interface ResolvedUserType {
+  userType: Classification['userType'];
+  source: Classification['source'];
+  fallbackReason?: string;
+}
+
 export function resolveUserType(params: {
   llmResult: LlmClassificationResult | null;
   classifications: Classification[];
   classifierSource: 'mock_classifier' | 'llm_adapter';
-}): Pick<Classification, 'userType' | 'source'> {
+}): ResolvedUserType {
   const { llmResult, classifications, classifierSource } = params;
 
   if (
@@ -67,6 +89,8 @@ export function resolveUserType(params: {
     };
   }
 
+  const llmFailureReason = deriveLlmFailureReason(llmResult);
+
   const confirmed = classifications.filter(
     (item) => item.confidence >= CLASSIFICATION_THRESHOLD,
   );
@@ -75,11 +99,13 @@ export function resolveUserType(params: {
     return {
       userType: modeWithLatestTieBreak(confirmed),
       source: 'history_fallback',
+      fallbackReason: llmFailureReason,
     };
   }
 
   return {
     userType: '개인 사용자',
     source: 'default_fallback',
+    fallbackReason: `${llmFailureReason} + 사용기록 부족`,
   };
 }

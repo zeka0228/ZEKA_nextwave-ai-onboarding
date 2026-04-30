@@ -14,6 +14,7 @@ export interface ClassificationOutcome {
   keywords: string[];
   reasoning?: string;
   rawUserType: LlmUserType;
+  fallbackReason?: string;
 }
 
 export async function runClassificationFlow(
@@ -34,5 +35,6 @@ export async function runClassificationFlow(
     keywords: llmResult?.keywords ?? [],
     reasoning: llmResult?.reasoning,
     rawUserType: llmResult?.user_type ?? 'unknown',
+    fallbackReason: resolved.fallbackReason,
   };
 }
